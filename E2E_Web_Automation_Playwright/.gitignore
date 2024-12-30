@@ -1,0 +1,12 @@
+.DS_Store
+*.iml
+.env
+
+# to ignore the node_modeules folder
+node_modules
+# to ignore the package-lock.json file
+package-lock.json
+
+
+# editor related
+.vscode/*
