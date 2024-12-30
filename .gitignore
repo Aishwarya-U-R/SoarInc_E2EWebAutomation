@@ -1,0 +1,14 @@
+.DS_Store
+*.iml
+.env
+
+# editor related
+.vscode/*
+
+
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+package-lock.json
