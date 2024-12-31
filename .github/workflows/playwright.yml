@@ -17,8 +17,29 @@ jobs:
         run: npm ci
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
+
+        # Set up Docker (this will ensure Docker is available for the next steps)
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      # Run Docker container (start Juice Shop container in background)
+      - name: Run Docker container
+        run: |
+          docker run -d -p 8080:3000 bkimminich/juice-shop
+
+      # Wait for the app to be ready (optional but recommended if app startup is slow)
+      - name: Wait for app to be up
+        run: |
+          sleep 10  # Adjust based on the app's startup time
+
       - name: Run Playwright tests
         run: npx playwright test
+
+        # Stop the Docker container after tests
+      - name: Stop Docker container
+        run: |
+          docker ps -q --filter "ancestor=bkimminich/juice-shop" | xargs docker stop
+
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
