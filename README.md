@@ -1,7 +1,7 @@
-# Functional Test
+# 1. Functional Test
 Bug reports are available at [owasp juice app](https://github.com/Aishwarya-U-R/SoarInc_E2EWebAutomation/blob/main/Functional_Test_Bugs_Reports/OWASP_JuiceShop_BugReport.pdf) & [wikiapp](https://github.com/Aishwarya-U-R/SoarInc_E2EWebAutomation/blob/main/Functional_Test_Bugs_Reports/Wikiapp_BugReport.pdf)
 
-# SoarInc_E2EWebAutomation
+# 2. SoarInc_E2EWebAutomation
 
 Bring up the container locally using `docker run -d -p 8080:3000 bkimminich/juice-shop`
 
