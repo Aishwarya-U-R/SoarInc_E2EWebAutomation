@@ -11,3 +11,6 @@ Playwright tests are also integrated to run in [CI](https://github.com/Aishwarya
 
 The run once completed, produces playwright test report in HTML format (uploaded as artifact in same pipelinerun)
 
+# Test Management
+Test management report for the User stories shared are available [here](https://github.com/Aishwarya-U-R/SoarInc_E2EWebAutomation/blob/main/TestManagement_Report/Test%20mangement.pdf)
+
