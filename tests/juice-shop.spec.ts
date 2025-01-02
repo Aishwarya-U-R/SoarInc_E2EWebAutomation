@@ -2,6 +2,8 @@ import { test, expect, Page, BrowserContext, Browser, chromium } from "@playwrig
 import { faker } from "@faker-js/faker"; // Importing Faker
 import config from "../playwright.config"; // Import the config file
 import dotenv from "dotenv";
+import { HomePage } from "../pages/HomePage";
+// import { test } from "../fixtures/base";
 
 let credentials = {
   email: "",
@@ -13,6 +15,7 @@ test.describe("OWASP Juice Shop Tests", () => {
   let context: BrowserContext;
   let browser: Browser;
   dotenv.config();
+  let homePage: HomePage;
 
   // Use environment variables for default email and password
   const defaultEmail = process.env.DEFAULT_EMAIL;
@@ -22,58 +25,20 @@ test.describe("OWASP Juice Shop Tests", () => {
     browser = await chromium.launch();
     context = await browser.newContext();
     page = await context.newPage();
+    homePage = new HomePage(page);
 
-    await page.goto("/", { waitUntil: "domcontentloaded" });
-    await page.waitForLoadState("load");
-    const title = await page.title();
-    expect(title).toContain("OWASP Juice Shop");
-
-    const welcomeBannerButton = page.getByRole("button", { name: "Close Welcome Banner" });
-    const cookieMessageButton = page.getByRole("button", { name: "dismiss cookie message" });
-
-    // Close the welcome banner if visible
-    if (await welcomeBannerButton.isVisible({ timeout: 10000 })) {
-      await welcomeBannerButton.click();
-    }
-
-    // Accept cookies if visible
-    if (await cookieMessageButton.isVisible({ timeout: 10000 })) {
-      await cookieMessageButton.click();
-    }
+    await homePage.goToHome();
+    await homePage.closeWelcomeBanner();
+    await homePage.acceptCookie();
   });
 
   test("1. Verify Maximum Items Displayed on Homepage After Scrolling and Changing Items Per Page", async ({}) => {
     //test.slow();
-    let selectedOption: any,
-      totalItems = 0;
-
-    await test.step(" Scroll down to the end of the page", async () => {
-      await page.locator(".mat-paginator-container").scrollIntoViewIfNeeded();
-    });
-
-    await test.step("Get the maximum products count", async () => {
-      const rangeLabel = page.locator(".mat-paginator-range-label");
-      const rangeText = await rangeLabel.textContent();
-      const cleanedText = rangeText?.replace(/\s+/g, " ").trim();
-      const parts = cleanedText?.split(" ");
-      // The last part of the string will contain the total count
-      totalItems = parseInt(parts?.[parts.length - 1] || "0");
-    });
-
-    let { itemsPerPageComboBox, options, count } = await selectMaxItemsPerPage(page);
-
-    await test.step("[Assertion] Verify that the last option is selected", async () => {
-      selectedOption = await itemsPerPageComboBox.textContent();
-      const lastOptionText = await options.nth(count - 1).textContent();
-      expect(selectedOption?.trim()).toBe(lastOptionText?.trim());
-      await page.waitForLoadState("load");
-    });
-
-    await test.step(`[Assertion] Verify that ${totalItems} items are displayed after selecting ${selectedOption} items per page`, async () => {
-      const matCards = page.locator(".mat-card");
-      const cardCount = await matCards.count();
-      expect(cardCount).toBe(totalItems);
-    });
+    await homePage.scrollToEndOfPage();
+    const totalItems = await homePage.getMaximumProductCount();
+    let count = await homePage.selectMaxItemsPerPage();
+    const selectedOption = await homePage.verifyLastOptionSelected(count);
+    await homePage.verifyItemsDisplayed(totalItems, selectedOption);
   });
 
   test("2. Verify Product Popup and Review Expansion for Apple Juice", async ({}) => {
@@ -117,7 +82,7 @@ test.describe("OWASP Juice Shop Tests", () => {
     });
 
     await test.step("Close the popup", async () => {
-      await page.getByRole("button", { name: "Close Dialog" }).click();
+      await homePage.page.getByRole("button", { name: "Close Dialog" }).click();
     });
   });
 
@@ -217,7 +182,7 @@ test.describe("OWASP Juice Shop Tests", () => {
     console.log("loginPassword is " + loginPassword);
     await navigateAndLogin(page, loginEmail, loginPassword);
 
-    await selectMaxItemsPerPage(page);
+    await homePage.selectMaxItemsPerPage();
 
     await test.step("[Assertion] Add products to the basket & verify success pop-up message", async () => {
       let basketCount = 1; // Start with basket count 1 and increment for each product
@@ -340,7 +305,7 @@ test.describe("OWASP Juice Shop Tests", () => {
 
   test.afterAll(async () => {
     // Close the browser after all tests
-    await context.close();
+    await page.close();
   });
 });
 
@@ -349,6 +314,7 @@ async function verifyFieldValidation(page: Page, fieldRole: any, fieldName: stri
   await page.getByRole(fieldRole, { name: fieldName }).click();
   await page.getByRole("button", { name: "Button to complete the registration" }).click({ force: true }); // Trigger validation
   await page.getByText("User Registration").click({ force: true }); // Trigger validation
+  await page.keyboard.press("Escape");
   await expect(page.locator(`text=${validationMessage}`)).toBeVisible();
 }
 
@@ -432,29 +398,6 @@ async function navigateAndLogin(page: Page, email: string, password: string) {
 
   // Call the loginToApp function to handle login
   await loginToApp(page, email, password);
-}
-
-async function selectMaxItemsPerPage(page: Page) {
-  let itemsPerPageComboBox: any;
-  let options: any;
-  let count = 0;
-
-  await test.step("Click the 'Items per page' dropdown", async () => {
-    itemsPerPageComboBox = page.getByRole("combobox", { name: "Items per page:" });
-    await itemsPerPageComboBox.click();
-  });
-
-  await test.step("Count options in the 'Items per page' dropdown", async () => {
-    options = page.locator("mat-option .mat-option-text");
-    count = await options.count();
-  });
-
-  await test.step("Select the maximum option (last) in the 'Items per page' dropdown", async () => {
-    await page.locator(".mat-paginator-page-size-label").scrollIntoViewIfNeeded();
-    await options.nth(count - 1).click();
-  });
-
-  return { itemsPerPageComboBox, options, count };
 }
 
 async function verifyBasketCount(page: Page, expectedCount: number) {
