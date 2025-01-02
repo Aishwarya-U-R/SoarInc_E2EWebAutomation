@@ -9,5 +9,5 @@ E2E Web Auomation framework used is - `Playwright with Typescript`
 
 Playwright tests are also integrated to run in [CI](https://github.com/Aishwarya-U-R/SoarInc_E2EWebAutomation/actions/workflows/playwright.yml)
 
-The run once completed, produces playwright test report in HTML format (attached in artifact in same pipelinerun)
+The run once completed, produces playwright test report in HTML format (uploaded as artifact in same pipelinerun)
 
