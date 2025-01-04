@@ -3,9 +3,9 @@ import { HomePage } from "../pages/HomePage";
 
 // Extend Playwright's test object with custom fixture
 export const test = base.extend<{
-  homePage: HomePage;
+  homePageFixture: HomePage;
 }>({
-  homePage: async ({ page }, use) => {
+  homePageFixture: async ({ page }, use) => {
     await use(new HomePage(page));
   },
 });

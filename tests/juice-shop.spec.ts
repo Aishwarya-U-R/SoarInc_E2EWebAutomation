@@ -1,9 +1,12 @@
-import { test, expect, Page, BrowserContext, Browser, chromium } from "@playwright/test";
+import { expect, Page, BrowserContext, Browser, chromium } from "@playwright/test";
+// import { test} from "@playwright/test";
+
 import { faker } from "@faker-js/faker"; // Importing Faker
 import config from "../playwright.config"; // Import the config file
 import dotenv from "dotenv";
 import { HomePage } from "../pages/HomePage";
-// import { test } from "../fixtures/base";
+import { RegistrationPage } from "../pages/UserRegistration";
+import { test } from "../fixtures/base";
 
 let credentials = {
   email: "",
@@ -12,27 +15,30 @@ let credentials = {
 
 test.describe("OWASP Juice Shop Tests", () => {
   let page: Page;
-  let context: BrowserContext;
-  let browser: Browser;
+  // let context: BrowserContext;
+  // let browser: Browser;
   dotenv.config();
   let homePage: HomePage;
+  // let regPage: RegistrationPage;
 
   // Use environment variables for default email and password
   const defaultEmail = process.env.DEFAULT_EMAIL;
   const defaultPassword = process.env.DEFAULT_PASSWORD;
 
-  test.beforeAll(async ({}) => {
-    browser = await chromium.launch();
-    context = await browser.newContext();
-    page = await context.newPage();
-    homePage = new HomePage(page);
+  test.beforeEach(async ({ homePageFixture }) => {
+    // browser = await chromium.launch();
+    // context = await browser.newContext();
+    // page = await context.newPage();
+    //homePage = new HomePage(homePageFixture);
+    homePage = homePageFixture;
+    //regPage = new RegistrationPage(homePage);
 
     await homePage.goToHome();
     await homePage.closeWelcomeBanner();
     await homePage.acceptCookie();
   });
 
-  test("1. Verify Maximum Items Displayed on Homepage After Scrolling and Changing Items Per Page", async ({}) => {
+  test.only("1. Verify Maximum Items Displayed on Homepage After Scrolling and Changing Items Per Page", async ({}) => {
     //test.slow();
     await homePage.scrollToEndOfPage();
     const totalItems = await homePage.getMaximumProductCount();
@@ -41,7 +47,7 @@ test.describe("OWASP Juice Shop Tests", () => {
     await homePage.verifyItemsDisplayed(totalItems, selectedOption);
   });
 
-  test("2. Verify Product Popup and Review Expansion for Apple Juice", async ({}) => {
+  test.only("2. Verify Product Popup and Review Expansion for Apple Juice", async ({}) => {
     const productName = "Apple Juice (1000ml)";
 
     const product = await homePage.locateProduct(productName);
@@ -54,227 +60,295 @@ test.describe("OWASP Juice Shop Tests", () => {
     await homePage.closePopup();
   });
 
-  test("3. Verify User Registration with Input Validations and  Login to App", async ({}) => {
-    const baseURL = config?.use?.baseURL as string;
+  // test("3-old. Verify User Registration with Input Validations and  Login to App", async ({}) => {
+  //   const baseURL = config?.use?.baseURL as string;
 
-    await test.step("Go to login page", async () => {
-      await page.getByRole("button", { name: "Show/hide account menu" }).click();
-      await page.getByRole("menuitem", { name: "Go to login page" }).click();
-    });
+  //   await test.step("Go to login page", async () => {
+  //     await page.getByRole("button", { name: "Show/hide account menu" }).click();
+  //     await page.getByRole("menuitem", { name: "Go to login page" }).click();
+  //   });
 
-    await test.step("Register new user", async () => {
-      await page.getByText("Not yet a customer?").click();
-      await page.waitForLoadState();
-    });
+  //   await test.step("Register new user", async () => {
+  //     await page.getByText("Not yet a customer?").click();
+  //     await page.waitForLoadState();
+  //   });
 
-    await test.step("[Assertion] Verify Email field validation", async () => {
-      await verifyFieldValidation(page, "textbox", "Email address field", "Please provide an email address.");
-    });
+  //   await test.step("[Assertion] Verify Email field validation", async () => {
+  //     await verifyFieldValidation(page, "textbox", "Email address field", "Please provide an email address.");
+  //   });
 
-    await test.step("[Assertion] Verify Password field validation", async () => {
-      await verifyFieldValidation(page, "textbox", "Field for the password", "Please provide a password.");
-    });
+  //   await test.step("[Assertion] Verify Password field validation", async () => {
+  //     await verifyFieldValidation(page, "textbox", "Field for the password", "Please provide a password.");
+  //   });
 
-    await test.step("[Assertion] Verify Password confirmation field validation", async () => {
-      await verifyFieldValidation(page, "textbox", "Field to confirm the password", "Please repeat your password.");
-    });
+  //   await test.step("[Assertion] Verify Password confirmation field validation", async () => {
+  //     await verifyFieldValidation(page, "textbox", "Field to confirm the password", "Please repeat your password.");
+  //   });
 
-    await test.step("[Assertion] Verify Security question dropdown validation", async () => {
-      await verifyFieldValidation(page, "combobox", "Selection list for the security question", "Please select a security question.");
-    });
+  //   await test.step("[Assertion] Verify Security question dropdown validation", async () => {
+  //     await verifyFieldValidation(page, "combobox", "Selection list for the security question", "Please select a security question.");
+  //   });
 
-    await test.step("[Assertion] Verify Security question answer field validation", async () => {
-      await verifyFieldValidation(page, "textbox", "Field for the answer to the security question", "Please provide an answer to your security question.");
-    });
+  //   await test.step("[Assertion] Verify Security question answer field validation", async () => {
+  //     await verifyFieldValidation(page, "textbox", "Field for the answer to the security question", "Please provide an answer to your security question.");
+  //   });
 
-    await test.step("Show Password Advice", async () => {
-      const toggle = page.locator('span.mat-slide-toggle-bar input[type="checkbox"]');
-      // Check if the toggle is off and click to turn it on
-      if ((await toggle.isChecked()) === false) {
-        await toggle.check({ force: true });
-      }
-    });
+  //   await test.step("Show Password Advice", async () => {
+  //     const toggle = page.locator('span.mat-slide-toggle-bar input[type="checkbox"]');
+  //     // Check if the toggle is off and click to turn it on
+  //     if ((await toggle.isChecked()) === false) {
+  //       await toggle.check({ force: true });
+  //     }
+  //   });
 
-    await test.step("[Assertion] Verify Password Advice validations", async () => {
-      expect(page.getByText("contains at least one lower character")).toBeVisible();
-      expect(page.getByText("contains at least one upper character")).toBeVisible();
-      expect(page.getByText("contains at least one digit")).toBeVisible();
-      expect(page.getByText("contains at least one special character")).toBeVisible();
-      expect(page.getByText("contains at least 8 characters")).toBeVisible();
-    });
+  //   await test.step("[Assertion] Verify Password Advice validations", async () => {
+  //     expect(page.getByText("contains at least one lower character")).toBeVisible();
+  //     expect(page.getByText("contains at least one upper character")).toBeVisible();
+  //     expect(page.getByText("contains at least one digit")).toBeVisible();
+  //     expect(page.getByText("contains at least one special character")).toBeVisible();
+  //     expect(page.getByText("contains at least 8 characters")).toBeVisible();
+  //   });
 
-    let { email, password } = generateFakeData();
-    console.log("email is:" + email);
-    console.log("password is:" + password);
+  //   let { email, password } = generateFakeData();
+  //   console.log("email is:" + email);
+  //   console.log("password is:" + password);
 
-    await test.step("Fill out registration form", async () => {
-      await page.getByRole("textbox", { name: "Email address field" }).fill(email);
-      await page.getByRole("textbox", { name: "Field for the password" }).fill(password);
-      await page.getByRole("textbox", { name: "Field to confirm the password" }).fill(password);
-      await page.getByRole("combobox", { name: "Selection list for the security question" }).click();
-      await page.locator('mat-option:has-text("Company you first work for as an adult?")').click();
-      await page.getByRole("textbox", { name: "Field for the answer to the security question" }).fill("Soar Inc");
-    });
+  //   await test.step("Fill out registration form", async () => {
+  //     await page.getByRole("textbox", { name: "Email address field" }).fill(email);
+  //     await page.getByRole("textbox", { name: "Field for the password" }).fill(password);
+  //     await page.getByRole("textbox", { name: "Field to confirm the password" }).fill(password);
+  //     await page.getByRole("combobox", { name: "Selection list for the security question" }).click();
+  //     await page.locator('mat-option:has-text("Company you first work for as an adult?")').click();
+  //     await page.getByRole("textbox", { name: "Field for the answer to the security question" }).fill("Soar Inc");
+  //   });
 
-    await test.step("Submit registration form", async () => {
-      await page.getByRole("button", { name: "Button to complete the registration" }).click();
-    });
+  //   await test.step("Submit registration form", async () => {
+  //     await page.getByRole("button", { name: "Button to complete the registration" }).click();
+  //   });
 
-    await test.step("Verify successful registration", async () => {
-      expect(page.getByText("Registration completed successfully. You can now log in.")).toBeVisible();
-      await page.waitForURL(/login/);
-    });
+  //   await test.step("Verify successful registration", async () => {
+  //     expect(page.getByText("Registration completed successfully. You can now log in.")).toBeVisible();
+  //     await page.waitForURL(/login/);
+  //   });
 
-    await navigateAndLogin(page, email, password);
+  //   await navigateAndLogin(page, email, password);
 
-    await test.step("Logout of account", async () => {
-      await page.getByRole("button", { name: "Show/hide account menu" }).click();
-      await page.waitForTimeout(200); //wait for menu to open
-      await page.getByRole("menuitem", { name: "Logout" }).click({ force: true });
-      await page.waitForURL(baseURL);
-    });
-    setCredentials(email, password);
-  });
+  //   await test.step("Logout of account", async () => {
+  //     await page.getByRole("button", { name: "Show/hide account menu" }).click();
+  //     await page.waitForTimeout(200); //wait for menu to open
+  //     await page.getByRole("menuitem", { name: "Logout" }).click({ force: true });
+  //     await page.waitForURL(baseURL);
+  //   });
+  //   setCredentials(email, password);
+  // });
 
-  test("4. E2E Test: Product Addition, Cart Validation, Basket Operations, and Checkout Workflow", async ({}) => {
-    const productNames = ["Apple Pomace", "Carrot Juice (1000ml)", "Green Smoothie", "Lemon Juice (500ml)", "Quince Juice (1000ml)"]; // Example product names
-    const cardNumber = faker.number.int({ min: 1000000000000000, max: 9999999999999999 });
-    const userName = faker.person.firstName();
-    const mobileNumber = faker.number.int({ min: 1000000, max: 9999999999 });
-    const priceMap = new Map<string, number>();
+  // test("3. Verify User Registration with Input Validations and Login to App", async ({ page }) => {
+  //   const registrationPage = new RegistrationPage(page);
+  //   const baseURL = config?.use?.baseURL as string;
 
-    const { email: emailToLogin, password: passwordToLogin } = getCredentials();
-    const loginEmail = (emailToLogin || defaultEmail) as string;
-    console.log("loginEmail is " + loginEmail);
-    const loginPassword = (passwordToLogin || defaultPassword) as string;
-    console.log("loginPassword is " + loginPassword);
-    await navigateAndLogin(page, loginEmail, loginPassword);
+  //   await test.step("Go to login page", async () => {
+  //     await registrationPage.goToLoginPage();
+  //   });
 
-    await homePage.selectMaxItemsPerPage();
+  //   await test.step("Register new user", async () => {
+  //     await registrationPage.startRegistration();
+  //   });
 
-    await test.step("[Assertion] Add products to the basket & verify success pop-up message", async () => {
-      let basketCount = 1; // Start with basket count 1 and increment for each product
+  //   await test.step("[Assertion] Verify Email field validation", async () => {
+  //     await registrationPage.verifyFieldValidation("textbox", "Email address field", "Please provide an email address.");
+  //   });
 
-      // Iterate over the product names and add each one to the cart
-      for (const productName of productNames) {
-        await addProductToCartAndVerify(page, productName, basketCount, priceMap);
-        basketCount++;
-      }
-    });
+  //   await test.step("[Assertion] Verify Password field validation", async () => {
+  //     await registrationPage.verifyFieldValidation("textbox", "Field for the password", "Please provide a password.");
+  //   });
 
-    console.log("Product prices:", priceMap);
+  //   await test.step("[Assertion] Verify Password confirmation field validation", async () => {
+  //     await registrationPage.verifyFieldValidation("textbox", "Field to confirm the password", "Please repeat your password.");
+  //   });
 
-    await test.step("Go to Basket", async () => {
-      await expect(page.getByText(`Placed ${productNames[4]} into basket.`)).toBeHidden();
-      await test.step("Go to Basket", async () => {
-        await page.getByRole("button", { name: "Show the shopping cart" }).click();
-        await page.waitForURL(/basket/);
-      });
-    });
+  //   await test.step("[Assertion] Verify Security question dropdown validation", async () => {
+  //     await registrationPage.verifyFieldValidation("combobox", "Selection list for the security question", "Please select a security question.");
+  //   });
 
-    await verifyProductsInBasket(page, productNames);
-    await verifyPricesInBasket(page, priceMap);
+  //   await test.step("[Assertion] Verify Security question answer field validation", async () => {
+  //     await registrationPage.verifyFieldValidation("textbox", "Field for the answer to the security question", "Please provide an answer to your security question.");
+  //   });
 
-    let totalBasketPrice = await verifyTotalPriceInBasket(page, priceMap);
+  //   await test.step("Show Password Advice", async () => {
+  //     await registrationPage.enablePasswordAdvice();
+  //   });
 
-    totalBasketPrice = await incrementProductQuantityInBasket(page, productNames[0], priceMap, totalBasketPrice);
-    totalBasketPrice = await incrementProductQuantityInBasket(page, productNames[1], priceMap, totalBasketPrice);
-    totalBasketPrice = await incrementProductQuantityInBasket(page, productNames[2], priceMap, totalBasketPrice);
+  //   await test.step("[Assertion] Verify Password Advice validations", async () => {
+  //     await registrationPage.verifyPasswordAdvice();
+  //   });
 
-    totalBasketPrice = await deleteProductFromBasket(page, productNames[0], priceMap, totalBasketPrice);
+  //   const { email, password } = generateFakeData();
+  //   console.log("email is:" + email);
+  //   console.log("password is:" + password);
 
-    await test.step("Proceed to Checkout, fill out Address", async () => {
-      await page.getByRole("button", { name: " Checkout" }).click({ force: true });
-      await page.getByRole("button", { name: "Add a new address" }).click();
-      await page.getByRole("textbox", { name: "Country" }).fill("Saudi Arabia");
-      await page.getByRole("textbox", { name: "Name" }).fill(userName);
-      await page.getByPlaceholder("Please provide a mobile number.").pressSequentially(String(mobileNumber));
-      await page.getByRole("textbox", { name: "ZIP Code" }).fill("35419");
-      await page.getByRole("textbox", { name: "Address" }).fill(faker.location.streetAddress());
-      await page.getByRole("textbox", { name: "City" }).fill(faker.location.city());
-      await page.getByRole("textbox", { name: "State" }).fill(faker.location.state());
+  //   await test.step("Fill out registration form", async () => {
+  //     await registrationPage.fillRegistrationForm(email, password, "Soar Inc");
+  //   });
 
-      await page.getByRole("button", { name: "send Submit" }).click();
-    });
+  //   await test.step("Submit registration form", async () => {
+  //     await registrationPage.submitRegistration();
+  //   });
 
-    let radioButton = page.locator(".mat-radio-input");
+  //   await test.step("Verify successful registration", async () => {
+  //     await registrationPage.verifySuccessfulRegistration();
+  //   });
 
-    await test.step("Select Address & Proceed for Delivery selection", async () => {
-      await radioButton.check({ force: true });
-      await expect(radioButton).toBeChecked();
+  //   await navigateAndLogin(page, email, password);
 
-      await page.getByRole("button", { name: "Proceed to payment selection" }).click();
-    });
+  //   await test.step("Logout of account", async () => {
+  //     //await registrationPage.accountMenuButton.click();
+  //     await page.waitForTimeout(200); // wait for menu to open
+  //     await page.getByRole("menuitem", { name: "Logout" }).click({ force: true });
+  //     await page.waitForURL(baseURL);
+  //   });
 
-    await test.step("Select Delivery method & Proceed for Payment selection", async () => {
-      radioButton = page.locator("//mat-cell[contains(text(), 'Standard Delivery')]/preceding-sibling::mat-cell//input[@id='mat-radio-45-input']");
-      await radioButton.check({ force: true });
+  //   setCredentials(email, password);
+  // });
 
-      await page.getByRole("button", { name: "Proceed to delivery method selection" }).click();
-    });
+  // test("4. E2E Test: Product Addition, Cart Validation, Basket Operations, and Checkout Workflow", async ({}) => {
+  //   const productNames = ["Apple Pomace", "Carrot Juice (1000ml)", "Green Smoothie", "Lemon Juice (500ml)", "Quince Juice (1000ml)"]; // Example product names
+  //   const cardNumber = faker.number.int({ min: 1000000000000000, max: 9999999999999999 });
+  //   const userName = faker.person.firstName();
+  //   const mobileNumber = faker.number.int({ min: 1000000, max: 9999999999 });
+  //   const priceMap = new Map<string, number>();
 
-    await test.step("[Assertion] Verify Wallet Balance is 0.00", async () => {
-      const walletBalance = page.locator("span.confirmation");
-      await expect(walletBalance).toHaveText("0.00");
-    });
+  //   const { email: emailToLogin, password: passwordToLogin } = getCredentials();
+  //   const loginEmail = (emailToLogin || defaultEmail) as string;
+  //   console.log("loginEmail is " + loginEmail);
+  //   const loginPassword = (passwordToLogin || defaultPassword) as string;
+  //   console.log("loginPassword is " + loginPassword);
+  //   await navigateAndLogin(page, loginEmail, loginPassword);
 
-    await test.step("Add Debit card for Payment", async () => {
-      await page.getByText("Add a credit or debit card").click();
-      await page.getByRole("textbox", { name: "Name" }).fill(userName);
-      await page.getByLabel("Card Number").pressSequentially(String(cardNumber));
+  //   await homePage.selectMaxItemsPerPage();
 
-      const expiryMonth = page.getByLabel("Expiry Month");
-      await expiryMonth.selectOption({ value: "1" });
+  //   await test.step("[Assertion] Add products to the basket & verify success pop-up message", async () => {
+  //     let basketCount = 1; // Start with basket count 1 and increment for each product
 
-      const expiryYear = page.getByLabel("Expiry Year");
-      await expiryYear.selectOption({ value: "2080" });
+  //     // Iterate over the product names and add each one to the cart
+  //     for (const productName of productNames) {
+  //       await addProductToCartAndVerify(page, productName, basketCount, priceMap);
+  //       basketCount++;
+  //     }
+  //   });
 
-      await page.getByRole("button", { name: "send Submit" }).click();
-    });
+  //   console.log("Product prices:", priceMap);
 
-    await test.step("Select the Debit card added and Proceed to Order Summary", async () => {
-      const cardText = page.locator('.mat-simple-snack-bar-content:has-text("Your card ending with")');
-      await expect(cardText).toHaveText(/Your card ending with \d{4} has been saved for your convenience./);
+  //   await test.step("Go to Basket", async () => {
+  //     await expect(page.getByText(`Placed ${productNames[4]} into basket.`)).toBeHidden();
+  //     await test.step("Go to Basket", async () => {
+  //       await page.getByRole("button", { name: "Show the shopping cart" }).click();
+  //       await page.waitForURL(/basket/);
+  //     });
+  //   });
 
-      radioButton = page.locator(".mat-radio-input");
-      await radioButton.check({ force: true });
+  //   await verifyProductsInBasket(page, productNames);
+  //   await verifyPricesInBasket(page, priceMap);
 
-      await page.getByRole("button", { name: "Proceed to review" }).click();
-      await page.waitForURL(/order-summary/);
-    });
+  //   let totalBasketPrice = await verifyTotalPriceInBasket(page, priceMap);
 
-    await test.step("[Assertion] Verify Total price in Order Summary & Complete purchase", async () => {
-      await page.waitForLoadState("load");
-      await page.waitForTimeout(1000);
-      const orderSummaryTotal = await page.locator("//td[text()='Total Price']/following-sibling::td[contains(@class, 'price')]").innerText();
-      console.log("orderSummaryTotal is :" + orderSummaryTotal);
-      let orderSummary = extractPrice(orderSummaryTotal, "Order Summary");
-      expect(orderSummary).toBe(totalBasketPrice);
+  //   totalBasketPrice = await incrementProductQuantityInBasket(page, productNames[0], priceMap, totalBasketPrice);
+  //   totalBasketPrice = await incrementProductQuantityInBasket(page, productNames[1], priceMap, totalBasketPrice);
+  //   totalBasketPrice = await incrementProductQuantityInBasket(page, productNames[2], priceMap, totalBasketPrice);
 
-      await page.getByRole("button", { name: "Complete your purchase" }).click();
+  //   totalBasketPrice = await deleteProductFromBasket(page, productNames[0], priceMap, totalBasketPrice);
 
-      await page.waitForURL(/order-completion/);
-      await expect(page.getByText("Thank you for your purchase!")).toBeVisible();
-    });
+  //   await test.step("Proceed to Checkout, fill out Address", async () => {
+  //     await page.getByRole("button", { name: " Checkout" }).click({ force: true });
+  //     await page.getByRole("button", { name: "Add a new address" }).click();
+  //     await page.getByRole("textbox", { name: "Country" }).fill("Saudi Arabia");
+  //     await page.getByRole("textbox", { name: "Name" }).fill(userName);
+  //     await page.getByPlaceholder("Please provide a mobile number.").pressSequentially(String(mobileNumber));
+  //     await page.getByRole("textbox", { name: "ZIP Code" }).fill("35419");
+  //     await page.getByRole("textbox", { name: "Address" }).fill(faker.location.streetAddress());
+  //     await page.getByRole("textbox", { name: "City" }).fill(faker.location.city());
+  //     await page.getByRole("textbox", { name: "State" }).fill(faker.location.state());
 
-    await test.step("Extract Order ID from URL", async () => {
-      const currentUrl = page.url();
-      const orderIdMatch = currentUrl.match(/\/order-completion\/([a-z0-9-]+)/);
+  //     await page.getByRole("button", { name: "send Submit" }).click();
+  //   });
 
-      // Check if the order ID is found
-      if (orderIdMatch) {
-        const orderId = orderIdMatch[1];
-        console.log(`Order ID: ${orderId}`);
-      } else {
-        console.log("Order ID not found in URL.");
-      }
-    });
-  });
+  //   let radioButton = page.locator(".mat-radio-input");
 
-  test.afterAll(async () => {
-    // Close the browser after all tests
-    await homePage.page.close();
-  });
+  //   await test.step("Select Address & Proceed for Delivery selection", async () => {
+  //     await radioButton.check({ force: true });
+  //     await expect(radioButton).toBeChecked();
+
+  //     await page.getByRole("button", { name: "Proceed to payment selection" }).click();
+  //   });
+
+  //   await test.step("Select Delivery method & Proceed for Payment selection", async () => {
+  //     radioButton = page.locator("//mat-cell[contains(text(), 'Standard Delivery')]/preceding-sibling::mat-cell//input[@id='mat-radio-45-input']");
+  //     await radioButton.check({ force: true });
+
+  //     await page.getByRole("button", { name: "Proceed to delivery method selection" }).click();
+  //   });
+
+  //   await test.step("[Assertion] Verify Wallet Balance is 0.00", async () => {
+  //     const walletBalance = page.locator("span.confirmation");
+  //     await expect(walletBalance).toHaveText("0.00");
+  //   });
+
+  //   await test.step("Add Debit card for Payment", async () => {
+  //     await page.getByText("Add a credit or debit card").click();
+  //     await page.getByRole("textbox", { name: "Name" }).fill(userName);
+  //     await page.getByLabel("Card Number").pressSequentially(String(cardNumber));
+
+  //     const expiryMonth = page.getByLabel("Expiry Month");
+  //     await expiryMonth.selectOption({ value: "1" });
+
+  //     const expiryYear = page.getByLabel("Expiry Year");
+  //     await expiryYear.selectOption({ value: "2080" });
+
+  //     await page.getByRole("button", { name: "send Submit" }).click();
+  //   });
+
+  //   await test.step("Select the Debit card added and Proceed to Order Summary", async () => {
+  //     const cardText = page.locator('.mat-simple-snack-bar-content:has-text("Your card ending with")');
+  //     await expect(cardText).toHaveText(/Your card ending with \d{4} has been saved for your convenience./);
+
+  //     radioButton = page.locator(".mat-radio-input");
+  //     await radioButton.check({ force: true });
+
+  //     await page.getByRole("button", { name: "Proceed to review" }).click();
+  //     await page.waitForURL(/order-summary/);
+  //   });
+
+  //   await test.step("[Assertion] Verify Total price in Order Summary & Complete purchase", async () => {
+  //     await page.waitForLoadState("load");
+  //     await page.waitForTimeout(1000);
+  //     const orderSummaryTotal = await page.locator("//td[text()='Total Price']/following-sibling::td[contains(@class, 'price')]").innerText();
+  //     console.log("orderSummaryTotal is :" + orderSummaryTotal);
+  //     let orderSummary = extractPrice(orderSummaryTotal, "Order Summary");
+  //     expect(orderSummary).toBe(totalBasketPrice);
+
+  //     await page.getByRole("button", { name: "Complete your purchase" }).click();
+
+  //     await page.waitForURL(/order-completion/);
+  //     await expect(page.getByText("Thank you for your purchase!")).toBeVisible();
+  //   });
+
+  //   await test.step("Extract Order ID from URL", async () => {
+  //     const currentUrl = page.url();
+  //     const orderIdMatch = currentUrl.match(/\/order-completion\/([a-z0-9-]+)/);
+
+  //     // Check if the order ID is found
+  //     if (orderIdMatch) {
+  //       const orderId = orderIdMatch[1];
+  //       console.log(`Order ID: ${orderId}`);
+  //     } else {
+  //       console.log("Order ID not found in URL.");
+  //     }
+  //   });
+  // });
+
+  // test.afterAll(async () => {
+  //   // Close the browser after all tests
+  //   await homePage.page.close();
+  // });
 });
 
 // Helper function to check validation message visibility

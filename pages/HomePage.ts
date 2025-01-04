@@ -40,6 +40,8 @@ export class HomePage implements HomePagePOM {
 
   constructor(page: Page) {
     this.page = page;
+
+    // Selectors
     this.closeWelcomeBannerBtn = 'button[aria-label="Close Welcome Banner"]';
     this.cookieMessageBtn = 'a[aria-label="dismiss cookie message"]';
     this.paginationContainer = page.locator(".mat-paginator-container");
