@@ -29,16 +29,6 @@ export class BasketPage implements BasketPagePOM {
   private fakeUserData: PaymentInfo | null = null;
 
   // Locators as instances of `Locator` with `private readonly` modifier
-  private readonly addToCartButton: Locator;
-  private readonly cartIcon: Locator;
-  private readonly productLocator: Locator;
-  private readonly productPrice: Locator;
-  private readonly deleteProductButton: Locator;
-  private readonly quantityInput: Locator;
-  private readonly addressField: Locator;
-  private readonly nameField: Locator;
-  private readonly mobileField: Locator;
-  private readonly creditCardInput: Locator;
   private readonly productCard: (productName: string) => Locator;
   private readonly addtoBasket: string;
   private readonly itemPrice: string;
@@ -71,16 +61,6 @@ export class BasketPage implements BasketPagePOM {
     this.page = page;
 
     // Initializing the locators
-    this.addToCartButton = this.page.locator("button.add-to-cart");
-    this.cartIcon = this.page.locator("button.cart-icon");
-    this.productLocator = this.page.locator("div.product");
-    this.productPrice = this.page.locator("span.product-price");
-    this.deleteProductButton = this.page.locator("button.delete-product");
-    this.quantityInput = this.page.locator("input.quantity");
-    this.addressField = this.page.locator("input.address");
-    this.nameField = this.page.locator("input.name");
-    this.mobileField = this.page.locator("input.mobile");
-    this.creditCardInput = this.page.locator("input.credit-card");
     this.productCard = (productName) => this.page.locator(`mat-card:has-text('${productName}')`);
     this.addtoBasket = 'button:has-text("Add to Basket")';
     this.itemPrice = ".item-price span";
