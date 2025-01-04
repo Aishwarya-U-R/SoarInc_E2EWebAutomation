@@ -303,10 +303,10 @@ test.describe("OWASP Juice Shop Tests", () => {
     });
   });
 
-  test.afterAll(async () => {
-    // Close the browser after all tests
-    await homePage.page.close();
-  });
+  // test.afterAll(async () => {
+  //   // Close the browser after all tests
+  //   await homePage.page.close();
+  // });
 });
 
 // Helper function to check validation message visibility
