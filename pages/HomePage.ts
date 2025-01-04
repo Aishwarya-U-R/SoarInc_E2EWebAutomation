@@ -69,7 +69,7 @@ export class HomePage implements HomePagePOM {
       try {
         const welcomeBanner = await this.page.waitForSelector(this.closeWelcomeBannerBtn, { state: "visible", timeout: 10000 });
         if (welcomeBanner) {
-          await welcomeBanner.click();
+          await welcomeBanner.click({ force: true });
           console.log("Welcome Banner clicked");
         }
       } catch (err) {
@@ -83,7 +83,7 @@ export class HomePage implements HomePagePOM {
       try {
         const cookieButton = await this.page.waitForSelector(this.cookieMessageBtn, { state: "visible", timeout: 10000 });
         if (cookieButton) {
-          await cookieButton.click();
+          await cookieButton.click({ force: true });
           console.log("Cookie consent clicked");
         }
       } catch (err) {
