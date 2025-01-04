@@ -1,15 +1,9 @@
-import { expect, Page } from "@playwright/test";
 import config from "../playwright.config"; // Import the config file
 import dotenv from "dotenv";
 import { HomePage } from "../pages/HomePage";
 import { RegistrationPage } from "../pages/UserRegistration";
 import { BasketPage } from "../pages/BasketPage";
 import { test } from "../fixtures/base";
-
-// let credentials = {
-//   email: "",
-//   password: "",
-// };
 
 test.describe("OWASP Juice Shop Tests", () => {
   dotenv.config();
@@ -146,103 +140,3 @@ test.describe("OWASP Juice Shop Tests", () => {
     console.log(`Order ID: ${orderId}`);
   });
 });
-
-function extractPrice(priceText: string, productName: string): number {
-  // Extract numeric value from the price string, removing the currency symbol
-  const priceMatch = priceText.match(/[\d.]+/);
-  if (!priceMatch) {
-    throw new Error(`Unable to extract ${productName} price`);
-  }
-  return parseFloat(priceMatch[0]);
-}
-
-async function incrementProductQuantityInBasket(page: Page, productName: string, priceMap: Map<string, number>, totalBasketPrice: number) {
-  let displayedTotalPrice = 0,
-    unitPrice = 0;
-  await test.step(`[Assertion] Increment quantity for ${productName} and Verify Total price increases accordingly`, async () => {
-    unitPrice = priceMap.get(productName.trim()) || 0;
-    // console.log(`Product: ${productName}, unitPrice: ${unitPrice}`);
-
-    const quantitySpan = page.locator(`//mat-cell[contains(@class, 'mat-column-product') and contains(text(), '${productName}')]/following-sibling::mat-cell[contains(@class, 'mat-column-quantity')]//span[not(@class)]`);
-    const addButton = page.locator(`//mat-cell[contains(@class, 'mat-column-product') and contains(text(), '${productName}')]/following-sibling::mat-cell[contains(@class, 'mat-column-quantity')]/button/span//*[contains(@class, 'fa-plus-square')]/ancestor::button`);
-
-    const currentQuantityText = await quantitySpan.innerText();
-    let currentQuantity = parseInt(currentQuantityText.trim(), 10);
-    await addButton.click();
-
-    // Wait for the DOM update (needed)
-    await page.waitForTimeout(1000);
-
-    // Verify the quantity has been incremented
-    const updatedQuantityText = await quantitySpan.innerText();
-    const updatedQuantity = parseInt(updatedQuantityText.trim(), 10);
-
-    // Assert that the quantity has been incremented by 1
-    if (updatedQuantity !== currentQuantity + 1) {
-      throw new Error(`Quantity for ${productName} did not increment correctly. Expected ${currentQuantity + 1}, but got ${updatedQuantity}`);
-    }
-    console.log(`Successfully incremented quantity for ${productName} to ${updatedQuantity}`);
-
-    //Due to bug
-    // // Verify that the price has been updated based on the new quantity
-    // const updatedPriceText = extractPrice(priceCell, productName);
-
-    // // Calculate the expected price based on the updated quantity
-    // const expectedUpdatedTotalPrice = unitPrice * updatedQuantity;
-
-    // // Log the updated state for reference
-    // console.log(`Product: ${productName}, Updated Quantity: ${updatedQuantity}, Updated Price: ${updatedPriceText}, Expected Updated Total Price: ${expectedUpdatedTotalPrice}`);
-
-    // // Assert that the displayed price matches the expected price based on the updated quantity
-    // if (updatedPriceText !== expectedUpdatedTotalPrice) {
-    //   throw new Error(`Price for ${productName} did not update correctly. Expected ${expectedUpdatedTotalPrice}, but got ${updatedPriceText}`);
-    // }
-
-    // Get the displayed total price from the basket page
-    const totalPriceText = await page.locator("#price").innerText();
-    displayedTotalPrice = extractPrice(totalPriceText, "Total");
-    expect(totalBasketPrice + unitPrice).toBe(displayedTotalPrice);
-    console.log(`Successfully verified Total price ${displayedTotalPrice} aft adding one more unit from ${productName}`);
-  });
-  return displayedTotalPrice;
-}
-
-async function deleteProductFromBasket(page: Page, productName: string, priceMap: Map<string, number>, totalBasketPrice: number) {
-  let displayedTotalPrice = 0;
-  let unitPrice: number = 0;
-  await test.step(`[Assertion] Remove product ${productName} from basket and Verify Total price decreases accordingly`, async () => {
-    unitPrice = priceMap.get(productName.trim()) || 0;
-
-    const quantitySpan = page.locator(`//mat-cell[contains(@class, 'mat-column-product') and contains(text(), '${productName}')]/following-sibling::mat-cell[contains(@class, 'mat-column-quantity')]//span[not(@class)]`);
-
-    // Verify the quantity has been incremented
-    const currentQuantityText = await quantitySpan.innerText();
-    const currentQuantity = parseInt(currentQuantityText.trim(), 10);
-
-    // Click the "trash" icon to remove item
-    const deleteButton = page.locator(`//mat-cell[contains(@class, 'mat-column-product') and contains(text(), '${productName}')]/following-sibling::mat-cell[contains(@class, 'mat-column-remove')]`);
-    await deleteButton.click();
-
-    // // Wait for the DOM update (needed)
-    await page.waitForTimeout(1000);
-
-    // Get the displayed total price from the basket page
-    const priceAfterItemRemoved = await page.locator("#price").innerText();
-    displayedTotalPrice = extractPrice(priceAfterItemRemoved, "Total");
-    let priceToReduce = currentQuantity * unitPrice;
-    expect(totalBasketPrice - priceToReduce).toBeCloseTo(displayedTotalPrice, 2);
-
-    console.log(`Successfully verified Total price ${displayedTotalPrice} aft removing ${productName}`);
-  });
-  return displayedTotalPrice;
-}
-
-// function getCredentials() {
-//   return { email: credentials.email, password: credentials.password };
-// }
-
-// function setCredentials(email: string, password: string) {
-//   credentials.email = email;
-//   credentials.password = password;
-//   console.log("Credentials set:", credentials);
-// }
