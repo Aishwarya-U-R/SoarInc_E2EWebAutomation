@@ -1,6 +1,11 @@
 import { expect, Locator, Page, test } from "playwright/test";
 import { faker } from "@faker-js/faker"; // Importing Faker
 
+let credentials = {
+  email: "",
+  password: "",
+};
+
 export class RegistrationPage {
   readonly page: Page;
   private readonly accountMenuButton: Locator;
@@ -176,13 +181,13 @@ export class RegistrationPage {
   }
 
   async setCredentials(email: string, password: string) {
-    let credentials = {
-      email: "",
-      password: "",
-    };
     credentials.email = email;
     credentials.password = password;
     console.log("Credentials set:", credentials);
     return credentials;
   }
+
+  getCredentials = async () => {
+    return { email: credentials.email, password: credentials.password };
+  };
 }

@@ -1,51 +1,245 @@
-// export interface BookSessionPOM {
-//     run: PageAction
-//     goTo: PageAction
-//     submitSession: PageAction
-//     fillForm: PageAction
-//   }
+import { Page, Locator, test, expect } from "@playwright/test";
+import { faker } from "@faker-js/faker"; // Importing Faker
 
-//   export class BookSessionPage implements BookSessionPOM {
-//     readonly page: Page
-//     readonly bookSessionLink: Locator
-//     readonly emailInput: Locator
-//     readonly nameInput: Locator
-//     readonly informationInput: Locator
-//     readonly submitButton: Locator
+type PageAction<T extends any[] = any[], R = any> = (...params: T) => Promise<R>;
 
-//     ... // And more selectors if required
+interface BasketPagePOM {
+  addProductToCartAndVerify: PageAction<[string, number, Map<string, number>], Map<string, number>>;
+  goToBasket: PageAction;
+  verifyProductsInBasket: PageAction<[string[]], void>;
+  verifyPricesInBasket: PageAction<[Map<string, number>], void>;
+  verifyTotalPriceInBasket: PageAction<[Map<string, number>], number>;
+  //   incrementProductQuantityInBasket: PageAction<string, void>;
+  //   deleteProductFromBasket: PageAction<string, void>;
+  //   fillOutAddress: PageAction<[string, string], void>;
+  //   proceedToPayment: PageAction<void, void>;
+  //   addCreditCard: PageAction<[string, string], void>;
+  //   completePurchase: PageAction<void, void>;
+  //   extractOrderIdFromUrl: PageAction<void, string | null>;
+}
 
-//     constructor(page: Page) {
-//       this.page = page
-//       this.bookSessionLink = page.locator(/* ... */)
-//       this.emailInput = page.locator(/* ... */)
-//       this.nameInput = page.locator(/* ... */)
-//       this.informationInput = page.locator(/* ... */)
-//       this.submitButton = page.locator(/* ... */)
-//       ... // And more selectors if required
-//     }
+interface PaymentInfo {
+  cardNumber: string;
+  userName: string;
+  mobileNumber: string;
+}
 
-//     // Now we implement methods from our type `Auth`
-//     // Methods should be simple and do exactly one thing or one action
-//     goTo: PageAction = async () => {
-//       await this.page.goto(HOMEPAGE)
-//       await expect(this.bookSessionLink).toBeVisible()
-//       await this.bookSessionLink.click()
-//     }
+export class BasketPage implements BasketPagePOM {
+  readonly page: Page;
 
-//     fillForm: PageAction = async () => {
-//       await this.emailInput.fill(/* ... */)
-//       await this.nameInput.fill(/* ... */)
-//       await this.informationInput.fill(/* ... */)
-//     }
+  // Locators as instances of `Locator` with `private readonly` modifier
+  private readonly addToCartButton: Locator;
+  private readonly cartIcon: Locator;
+  private readonly checkoutButton: Locator;
+  private readonly productLocator: Locator;
+  private readonly productPrice: Locator;
+  private readonly deleteProductButton: Locator;
+  private readonly quantityInput: Locator;
+  private readonly addressField: Locator;
+  private readonly nameField: Locator;
+  private readonly mobileField: Locator;
+  private readonly submitAddressButton: Locator;
+  private readonly creditCardInput: Locator;
+  private readonly completePurchaseButton: Locator;
+  private readonly productCard: (productName: string) => Locator;
+  private readonly addtoBasket: string;
+  private readonly itemPrice: string;
+  private readonly itemInBasket: (productName: string) => Locator;
+  private readonly basketCount: Locator;
+  private readonly showShoppingCart: Locator;
+  private readonly productCell: (productName: string) => Locator;
+  private readonly productRows: Locator;
+  private readonly productCellName: string;
+  private readonly priceCell: string;
+  private readonly totalPriceText: Locator;
 
-//     submitSession: PageAction = async () => {
-//       await this.submitButton.click()
-//     }
+  constructor(page: Page) {
+    this.page = page;
 
-//     run: PageAction = async () => {
-//       await this.goTo()
-//       await this.fillForm()
-//       await this.submitSession()
-//     }
-//   }
+    // Initializing the locators
+    this.addToCartButton = this.page.locator("button.add-to-cart");
+    this.cartIcon = this.page.locator("button.cart-icon");
+    this.checkoutButton = this.page.locator("button.checkout");
+    this.productLocator = this.page.locator("div.product");
+    this.productPrice = this.page.locator("span.product-price");
+    this.deleteProductButton = this.page.locator("button.delete-product");
+    this.quantityInput = this.page.locator("input.quantity");
+    this.addressField = this.page.locator("input.address");
+    this.nameField = this.page.locator("input.name");
+    this.mobileField = this.page.locator("input.mobile");
+    this.submitAddressButton = this.page.locator("button.submit-address");
+    this.creditCardInput = this.page.locator("input.credit-card");
+    this.completePurchaseButton = this.page.locator("button.complete-purchase");
+    this.productCard = (productName) => this.page.locator(`mat-card:has-text('${productName}')`);
+    this.addtoBasket = 'button:has-text("Add to Basket")';
+    this.itemPrice = ".item-price span";
+    this.itemInBasket = (productName) => this.page.getByText(`Placed ${productName} into basket.`);
+    this.showShoppingCart = this.page.getByRole("button", { name: "Show the shopping cart" });
+    this.basketCount = this.showShoppingCart.locator("span.fa-layers-counter");
+    this.productCell = (productName) => this.page.locator(`mat-cell:has-text("${productName}")`);
+    this.productRows = this.page.locator("mat-row");
+    this.productCellName = "mat-cell.mat-column-product";
+    this.priceCell = "mat-cell.mat-column-price";
+    this.totalPriceText = this.page.locator("#price");
+  }
+
+  // Add product to cart and verify success
+  addProductToCartAndVerify = async (productName: string, basketCount: number, priceMap: Map<string, number>): Promise<Map<string, number>> => {
+    await test.step(`Locate product card for "${productName}", add it to basket and read its price`, async () => {
+      let priceText = await this.productCard(productName).locator(this.itemPrice).innerText();
+
+      // Use regex to extract only numbers (excluding currency symbols)
+      const productPrice = this.extractPrice(priceText, productName);
+      priceMap.set(productName, productPrice);
+
+      // Find and click the "Add to Basket" button within the same mat-card
+      const addToBasketButton = this.productCard(productName).locator(this.addtoBasket);
+      await addToBasketButton.scrollIntoViewIfNeeded();
+      await addToBasketButton.click();
+    });
+
+    await test.step(`[Assertion] Verify success message for adding ${productName} to basket`, async () => {
+      await expect(this.itemInBasket(productName)).toBeVisible();
+    });
+
+    await this.verifyBasketCount(basketCount);
+    return priceMap;
+  };
+
+  private verifyBasketCount = async (expectedCount: number) => {
+    await test.step("Wait for basket count to be updated and verify", async () => {
+      await this.page.waitForTimeout(500);
+      // Get the current count from the cart button
+      const countText = await this.basketCount.innerText();
+
+      // Verify if the count has been updated correctly
+      expect(parseInt(countText)).toBe(expectedCount);
+    });
+  };
+
+  goToBasket = async (productName: string) => {
+    await test.step("Go to Basket", async () => {
+      await expect(this.itemInBasket(productName)).toBeHidden();
+      await this.showShoppingCart.click();
+      await this.page.waitForURL(/basket/);
+    });
+  };
+
+  verifyProductsInBasket = async (productNames: string[]): Promise<void> => {
+    await test.step("Verify products are present in the basket", async () => {
+      for (const productName of productNames) {
+        await expect(this.productCell(productName)).toBeVisible();
+      }
+    });
+  };
+
+  verifyPricesInBasket = async (priceMap: Map<string, number>): Promise<void> => {
+    await test.step("[Assertion] Verify Product price in Basket is same as price in Home page", async () => {
+      for (const row of await this.productRows.all()) {
+        const productName = await row.locator(this.productCellName).innerText();
+        const priceCell = await row.locator(this.priceCell).innerText();
+        const displayedPrice = this.extractPrice(priceCell, productName);
+        if (displayedPrice) {
+          const expectedPrice = priceMap.get(productName.trim());
+          if (expectedPrice !== undefined) {
+            expect(displayedPrice).toBe(expectedPrice);
+            console.log("ExpectedPrice is:" + expectedPrice + ", Displayed price is:" + displayedPrice + " for product:" + productName.trim());
+          } else {
+            throw new Error(`Price for ${productName} not found in priceMap`);
+          }
+        }
+      }
+    });
+  };
+
+  verifyTotalPriceInBasket = async (priceMap: Map<string, number>): Promise<number> => {
+    let displayedTotalPrice = 0;
+    await test.step("[Assertion] Sum up the prices from the priceMap and verify with Displayed Total", async () => {
+      const totalSum = Array.from(priceMap.values()).reduce((sum, price) => sum + price, 0);
+
+      const totalPriceText = await this.totalPriceText.innerText();
+      displayedTotalPrice = this.extractPrice(totalPriceText, "Total");
+      expect(totalSum).toBe(displayedTotalPrice);
+      console.log("Total Unit Price of products is:" + totalSum + ", DisplayedTotalPrice is:" + displayedTotalPrice);
+    });
+    return displayedTotalPrice;
+  };
+
+  // Increment product quantity in the basket
+  incrementProductQuantityInBasket = async (productName: string): Promise<void> => {
+    return await test.step(`Increment quantity for ${productName}`, async () => {
+      const quantityInput = this.quantityInput.first();
+      await quantityInput.fill("2"); // Example: set quantity to 2
+      console.log(`Incremented quantity for ${productName} in basket.`);
+    });
+  };
+
+  //   // Delete product from the basket
+  //   deleteProductFromBasket = async (productName: string): Promise<void> => {
+  //     return await test.step(`Delete ${productName} from the basket`, async () => {
+  //       const deleteButton = this.page.locator(`${this.deleteProductButton.locator()} >> text=${productName}`);
+  //       await deleteButton.click();
+  //       console.log(`Deleted ${productName} from basket.`);
+  //     });
+  //   };
+
+  //   // Fill out address information during checkout
+  //   fillOutAddress = async (userName: string, mobileNumber: string): Promise<void> => {
+  //     return await test.step("Fill out the address form", async () => {
+  //       await this.addressField.fill("123 Fake Street");
+  //       await this.nameField.fill(userName);
+  //       await this.mobileField.fill(mobileNumber);
+  //       await this.submitAddressButton.click();
+  //     });
+
+  //   Proceed to payment step
+  //   proceedToPayment = async (): Promise<void> => {
+  //     return await test.step("Proceed to payment", async () => {
+  //       await this.checkoutButton.click();
+  //     });
+  //   };
+
+  //   Add a credit card for payment
+  //   addCreditCard = async (cardNumber: string, userName: string): Promise<void> => {
+  //     return await test.step("Add a credit card", async () => {
+  //       await this.creditCardInput.fill(cardNumber);
+  //       console.log(`Added credit card: ${cardNumber} for user ${userName}`);
+  //     });
+  //   };
+
+  //   Complete the purchase
+  //   completePurchase = async (): Promise<void> => {
+  //     return await test.step("Complete the purchase", async () => {
+  //       await this.completePurchaseButton.click();
+  //     });
+  //   };
+
+  //   Extract the Order ID from the URL after completing the purchase
+  //   extractOrderIdFromUrl = async (): Promise<string | null> => {
+  //     return await test.step("Extract order ID from URL", async () => {
+  //       const currentUrl = this.page.url();
+  //       const orderIdMatch = currentUrl.match(/\/order-completion\/([a-z0-9-]+)/);
+  //       if (orderIdMatch) {
+  //         return orderIdMatch[1];
+  //       }
+  //       console.log("Order ID not found in URL.");
+  //       return null;
+  //     });
+
+  generateFakeData = async (): Promise<PaymentInfo> => {
+    const cardNumber = faker.number.int({ min: 1000000000000000, max: 9999999999999999 }).toString();
+    const userName = faker.person.firstName();
+    const mobileNumber = faker.number.int({ min: 1000000, max: 9999999999 }).toString();
+
+    return { cardNumber, userName, mobileNumber };
+  };
+
+  extractPrice = (priceText: string, productName: string): number => {
+    // Extract numeric value from the price string, removing the currency symbol
+    const priceMatch = priceText.match(/[\d.]+/);
+    if (!priceMatch) {
+      throw new Error(`Unable to extract ${productName} price`);
+    }
+    return parseFloat(priceMatch[0]);
+  };
+}
