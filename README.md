@@ -5,7 +5,7 @@ Bug reports are available at [owasp juice app](https://github.com/Aishwarya-U-R/
 
 Bring up the container locally using `docker run -d -p 8080:3000 bkimminich/juice-shop`
 
-**E2E Web Auomation framework used is - `Playwright with Typescript`**
+E2E Web Auomation framework used is - **`Playwright with Typescript`**
 
 Playwright tests are also integrated to run in **[CI](https://github.com/Aishwarya-U-R/SoarInc_E2EWebAutomation/actions/workflows/playwright.yml)**
 
