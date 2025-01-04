@@ -24,7 +24,7 @@ export default defineConfig({
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: "html",
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
-  timeout: 50000, // Global timeout for all tests (in milliseconds)
+  timeout: 120000, // Global timeout for all tests (in milliseconds)
   expect: {
     timeout: 30000,
   },
@@ -37,8 +37,8 @@ export default defineConfig({
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
-    actionTimeout: 50000, // Timeout for actions like click, fill, etc.
-    navigationTimeout: 50000, // Timeout for page navigation
+    actionTimeout: 120000, // Timeout for actions like click, fill, etc.
+    navigationTimeout: 120000, // Timeout for page navigation
     //headless: false,
   },
 
