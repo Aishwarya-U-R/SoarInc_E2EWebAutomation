@@ -305,7 +305,7 @@ test.describe("OWASP Juice Shop Tests", () => {
 
   test.afterAll(async () => {
     // Close the browser after all tests
-    await page.close();
+    await homePage.page.close();
   });
 });
 
