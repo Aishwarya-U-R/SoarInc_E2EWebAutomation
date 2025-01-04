@@ -39,7 +39,7 @@ export default defineConfig({
     video: "retain-on-failure",
     actionTimeout: 50000, // Timeout for actions like click, fill, etc.
     navigationTimeout: 50000, // Timeout for page navigation
-    headless: false,
+    //headless: false,
   },
 
   /* Configure projects for major browsers */
