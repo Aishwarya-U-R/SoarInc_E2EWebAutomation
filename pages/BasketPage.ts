@@ -259,7 +259,6 @@ export class BasketPage implements BasketPagePOM {
       displayedTotalPrice = this.extractPrice(await this.totalPrice, "Total");
       let priceToReduce = currentQuantity * unitPrice;
       expect(totalBasketPrice - priceToReduce).toBeCloseTo(displayedTotalPrice, 2);
-
       console.log(`Successfully verified Total price ${displayedTotalPrice} aft removing ${productName}`);
     });
     return displayedTotalPrice;

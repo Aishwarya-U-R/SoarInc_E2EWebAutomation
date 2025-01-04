@@ -30,7 +30,7 @@ test.describe("OWASP Juice Shop Tests", () => {
     await homePage.acceptCookie();
   });
 
-  test.only("1. Verify Maximum Items Displayed on Homepage After Scrolling and Changing Items Per Page", async ({}) => {
+  test("1. Verify Maximum Items Displayed on Homepage After Scrolling and Changing Items Per Page", async ({}) => {
     await homePage.scrollToEndOfPage();
     const totalItems = await homePage.getMaximumProductCount();
     let count = await homePage.selectMaxItemsPerPage();
@@ -91,29 +91,9 @@ test.describe("OWASP Juice Shop Tests", () => {
     });
   });
 
-  test.skip("4 -old. E2E Test: Product Addition, Cart Validation, Basket Operations, and Checkout Workflow", async ({}) => {
-    // await test.step("Extract Order ID from URL", async () => {
-    //   const currentUrl = page.url();
-    //   const orderIdMatch = currentUrl.match(/\/order-completion\/([a-z0-9-]+)/);
-    //   // Check if the order ID is found
-    //   if (orderIdMatch) {
-    //     const orderId = orderIdMatch[1];
-    //     console.log(`Order ID: ${orderId}`);
-    //   } else {
-    //     console.log("Order ID not found in URL.");
-    //   }
-    // });
-  });
-
   test("4. E2E Test: Product Addition, Cart Validation, Basket Operations, and Checkout Workflow", async ({}) => {
     const productNames = ["Apple Pomace", "Carrot Juice (1000ml)", "Green Smoothie", "Lemon Juice (500ml)", "Quince Juice (1000ml)"]; // Example product names
     let priceMap = new Map<string, number>();
-
-    const { userName, mobileNumber, cardNumber } = await basketPage.getFakeUserData();
-
-    console.log("Card number:", cardNumber);
-    console.log("User Name:", userName);
-    console.log("Mobile Number:", mobileNumber);
 
     const { email: emailToLogin, password: passwordToLogin } = await regPage.getCredentials();
     const loginEmail = (emailToLogin || defaultEmail) as string;
@@ -134,22 +114,19 @@ test.describe("OWASP Juice Shop Tests", () => {
 
     console.log("Product prices:", priceMap);
 
-    await test.step("Go to Basket", async () => {
-      await basketPage.goToBasket(productNames[4]);
-    });
+    await basketPage.goToBasket(productNames[4]);
 
     await basketPage.verifyProductsInBasket(productNames);
     await basketPage.verifyPricesInBasket(priceMap);
 
     let totalBasketPrice = await basketPage.verifyTotalPriceInBasket(priceMap);
-    console.log("displayedTotalPrice is:" + totalBasketPrice);
 
+    // increment some products
     totalBasketPrice = await basketPage.incrementProductQuantityInBasket(productNames[0], priceMap, totalBasketPrice);
     totalBasketPrice = await basketPage.incrementProductQuantityInBasket(productNames[1], priceMap, totalBasketPrice);
     totalBasketPrice = await basketPage.incrementProductQuantityInBasket(productNames[2], priceMap, totalBasketPrice);
-    console.log("displayedTotalPric aft add operations :" + totalBasketPrice);
 
-    // // Delete a product
+    // Delete a product
     totalBasketPrice = await basketPage.deleteProductFromBasket(productNames[0], priceMap, totalBasketPrice);
     console.log("displayedTotalPric aft delete operations :" + totalBasketPrice);
     await basketPage.proceedToCheckoutAndFillAddress();
