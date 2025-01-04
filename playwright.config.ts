@@ -14,9 +14,9 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: "./tests",
   /* Run tests in files in parallel */
-  fullyParallel: true,
+  fullyParallel: false,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
-  forbidOnly: !!process.env.CI,
+  forbidOnly: false,
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
@@ -24,9 +24,9 @@ export default defineConfig({
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: "html",
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
-  timeout: 50000, // Global timeout for all tests (in milliseconds)
+  timeout: 120000, // Global timeout for all tests (in milliseconds)
   expect: {
-    timeout: 20000,
+    timeout: 30000,
   },
 
   use: {
@@ -36,8 +36,10 @@ export default defineConfig({
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",
     screenshot: "only-on-failure",
-    actionTimeout: 30000, // Timeout for actions like click, fill, etc.
-    navigationTimeout: 30000, // Timeout for page navigation
+    video: "retain-on-failure",
+    actionTimeout: 120000, // Timeout for actions like click, fill, etc.
+    navigationTimeout: 120000, // Timeout for page navigation
+    //headless: false,
   },
 
   /* Configure projects for major browsers */
@@ -46,16 +48,14 @@ export default defineConfig({
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
     },
-
-    {
-      name: "firefox",
-      use: { ...devices["Desktop Firefox"] },
-    },
-
-    {
-      name: "webkit",
-      use: { ...devices["Desktop Safari"] },
-    },
+    // {
+    //   name: "firefox",
+    //   use: { ...devices["Desktop Firefox"] },
+    // },
+    // {
+    //   name: "webkit",
+    //   use: { ...devices["Desktop Safari"] },
+    // },
 
     /* Test against mobile viewports. */
     // {

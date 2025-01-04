@@ -105,5 +105,10 @@
     /* Completeness */
     // "skipDefaultLibCheck": true,                      /* Skip type checking .d.ts files that are included with TypeScript. */
     "skipLibCheck": true /* Skip type checking all .d.ts files. */
-  }
+  },
+  "include": [
+    "tests/**/*.ts", // Include your tests folder here
+    "pages/**/*.ts", // If you have pages or other related folders
+    "fixtures/**/*.ts" // If you have pages or other related folders
+  ]
 }
