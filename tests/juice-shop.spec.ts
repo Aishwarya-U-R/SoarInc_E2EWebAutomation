@@ -32,7 +32,7 @@ test.describe("OWASP Juice Shop Tests", () => {
     await homePage.acceptCookie();
   });
 
-  test.only("1. Verify Maximum Items Displayed on Homepage After Scrolling and Changing Items Per Page", async ({}) => {
+  test("1. Verify Maximum Items Displayed on Homepage After Scrolling and Changing Items Per Page", async ({}) => {
     //test.slow();
     await homePage.scrollToEndOfPage();
     const totalItems = await homePage.getMaximumProductCount();
@@ -41,7 +41,7 @@ test.describe("OWASP Juice Shop Tests", () => {
     await homePage.verifyItemsDisplayed(totalItems, selectedOption);
   });
 
-  test.only("2. Verify Product Popup and Review Expansion for Apple Juice", async ({}) => {
+  test("2. Verify Product Popup and Review Expansion for Apple Juice", async ({}) => {
     const productName = "Apple Juice (1000ml)";
 
     const product = await homePage.locateProduct(productName);
@@ -52,50 +52,6 @@ test.describe("OWASP Juice Shop Tests", () => {
     const reviewCount = await homePage.extractReviewCount();
     await homePage.expandReviewsIfPresent(reviewCount);
     await homePage.closePopup();
-  });
-
-  test("2-old. Verify Product Popup and Review Expansion for Apple Juice", async ({}) => {
-    let fruitName = "Apple Juice (1000ml)"; //"Apple Pomace" for testing
-    let product: any,
-      imageSrc: any,
-      popUpImageSrc: any,
-      reviewCount = 0;
-
-    await test.step("Locate the product based on fruit name", async () => {
-      product = page.locator(`div.mat-tooltip-trigger:has-text('${fruitName}')`);
-    });
-
-    await test.step("Capture the image source of the product", async () => {
-      imageSrc = await product.locator("img.mat-card-image").getAttribute("src");
-    });
-
-    await test.step("[Assertion] Click on the product to open the popup & Verify pop-up appears", async () => {
-      await product.click();
-      const popup = page.locator("mat-dialog-content");
-      await expect(popup).toBeVisible();
-    });
-
-    await test.step("[Assertion] Extract the image source from the popup & Verify", async () => {
-      popUpImageSrc = await product.getByAltText(`${fruitName}`).getAttribute("src");
-      console.log("Image Source:", popUpImageSrc);
-      expect(imageSrc).toEqual(popUpImageSrc);
-    });
-
-    await test.step("Extract the review count", async () => {
-      const reviewText = await page.locator('mat-panel-title:has-text("Reviews")').innerText();
-      reviewCount = parseInt(reviewText.match(/\((\d+)\)/)?.[1] || "0");
-    });
-
-    await test.step("Expand the review section if review count is greater than 0", async () => {
-      if (reviewCount > 0) {
-        await page.locator('mat-expansion-panel-header:has-text("Reviews")').click();
-        await page.waitForSelector(".mat-expanded");
-      }
-    });
-
-    await test.step("Close the popup", async () => {
-      await homePage.page.getByRole("button", { name: "Close Dialog" }).click();
-    });
   });
 
   test("3. Verify User Registration with Input Validations and  Login to App", async ({}) => {
