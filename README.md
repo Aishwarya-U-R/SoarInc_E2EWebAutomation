@@ -3,7 +3,7 @@ Bug reports are available at **[owasp juice app](https://github.com/Aishwarya-U-
 
 # 2. SoarInc_E2EWebAutomation
 
-E2E Web Auomation framework used is - **`Playwright with Typescript`** and present inside [tests folder](https://github.com/Aishwarya-U-R/SoarInc_E2EWebAutomation/tree/main/tests)
+E2E Web Auomation framework used is - **`Playwright with Typescript`** and E2E Web Automation tests present inside [tests folder](https://github.com/Aishwarya-U-R/SoarInc_E2EWebAutomation/tree/main/tests)
 
 Playwright tests are also integrated to run in **[CI and running here](https://github.com/Aishwarya-U-R/SoarInc_E2EWebAutomation/actions/workflows/playwright.yml)**
 
