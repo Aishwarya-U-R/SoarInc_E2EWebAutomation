@@ -67,7 +67,6 @@ export class HomePage implements HomePagePOM {
     const title = await this.page.title();
     expect(title).toContain("OWASP Juice Shop");
     await this.page.waitForLoadState("domcontentloaded");
-    await this.page.waitForSelector(this.snackBar, { state: "hidden" });
   };
 
   closeWelcomeBanner = async () => {
@@ -76,6 +75,7 @@ export class HomePage implements HomePagePOM {
         const welcomeBanner = await this.page.waitForSelector(this.closeWelcomeBannerBtn, { state: "visible", timeout: 10000 });
         if (welcomeBanner) {
           await welcomeBanner.click({ force: true });
+          await this.page.waitForSelector(this.closeWelcomeBannerBtn, { state: "hidden", timeout: 10000 });
           console.log("Welcome Banner clicked");
         }
       } catch (err) {
@@ -90,6 +90,8 @@ export class HomePage implements HomePagePOM {
         const cookieButton = await this.page.waitForSelector(this.cookieMessageBtn, { state: "visible", timeout: 10000 });
         if (cookieButton) {
           await cookieButton.click({ force: true });
+          await this.page.waitForSelector(this.cookieMessageBtn, { state: "hidden", timeout: 10000 });
+          await this.page.waitForSelector(this.snackBar, { state: "hidden" });
           console.log("Cookie consent clicked");
         }
       } catch (err) {

@@ -92,8 +92,6 @@ test.describe("OWASP Juice Shop Tests", () => {
   });
 
   test.skip("4 -old. E2E Test: Product Addition, Cart Validation, Basket Operations, and Checkout Workflow", async ({}) => {
-    // await verifyProductsInBasket(page, productNames);
-    // await verifyPricesInBasket(page, priceMap);
     // let totalBasketPrice = await verifyTotalPriceInBasket(page, priceMap);
     // totalBasketPrice = await incrementProductQuantityInBasket(page, productNames[0], priceMap, totalBasketPrice);
     // totalBasketPrice = await incrementProductQuantityInBasket(page, productNames[1], priceMap, totalBasketPrice);
@@ -207,14 +205,14 @@ test.describe("OWASP Juice Shop Tests", () => {
     let totalBasketPrice = await basketPage.verifyTotalPriceInBasket(priceMap);
     console.log("displayedTotalPrice is:" + totalBasketPrice);
 
-    // // Modify product quantities
-    // totalBasketPrice = await basketPage.incrementProductQuantityInBasket(productNames[0], priceMap, totalBasketPrice);
-    // totalBasketPrice = await basketPage.incrementProductQuantityInBasket(productNames[1], priceMap, totalBasketPrice);
-    // totalBasketPrice = await basketPage.incrementProductQuantityInBasket(productNames[2], priceMap, totalBasketPrice);
+    totalBasketPrice = await basketPage.incrementProductQuantityInBasket(productNames[0], priceMap, totalBasketPrice);
+    totalBasketPrice = await basketPage.incrementProductQuantityInBasket(productNames[1], priceMap, totalBasketPrice);
+    totalBasketPrice = await basketPage.incrementProductQuantityInBasket(productNames[2], priceMap, totalBasketPrice);
+    console.log("displayedTotalPric aft add operations :" + totalBasketPrice);
 
     // // Delete a product
-    // totalBasketPrice = await basketPage.deleteProductFromBasket(productNames[0], priceMap, totalBasketPrice);
-
+    totalBasketPrice = await basketPage.deleteProductFromBasket(productNames[0], priceMap, totalBasketPrice);
+    console.log("displayedTotalPric aft delete operations :" + totalBasketPrice);
     // await test.step("Proceed to Checkout, fill out Address", async () => {
     //   await basketPage.proceedToCheckout();
     //   await basketPage.fillOutAddress(userName, mobileNumber);
@@ -252,19 +250,6 @@ test.describe("OWASP Juice Shop Tests", () => {
     // });
   });
 });
-
-async function verifyTotalPriceInBasket(page: Page, priceMap: Map<string, number>) {
-  let displayedTotalPrice = 0;
-  await test.step("[Assertion] Sum up the prices from the priceMap and verify with Displayed Total", async () => {
-    const totalSum = Array.from(priceMap.values()).reduce((sum, price) => sum + price, 0);
-
-    const totalPriceText = await page.locator("#price").innerText();
-    displayedTotalPrice = extractPrice(totalPriceText, "Total");
-    expect(totalSum).toBe(displayedTotalPrice);
-    console.log("Total Unit Price of products is:" + totalSum + ", DisplayedTotalPrice is:" + displayedTotalPrice);
-  });
-  return displayedTotalPrice;
-}
 
 function extractPrice(priceText: string, productName: string): number {
   // Extract numeric value from the price string, removing the currency symbol

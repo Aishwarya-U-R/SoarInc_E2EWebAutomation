@@ -52,6 +52,9 @@ export class BasketPage implements BasketPagePOM {
   private readonly productCellName: string;
   private readonly priceCell: string;
   private readonly totalPriceText: Locator;
+  private readonly quantitySpan: (productName: string) => Locator;
+  private readonly addButton: (productName: string) => Locator;
+  private readonly deleteButton: (productName: string) => Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -81,6 +84,9 @@ export class BasketPage implements BasketPagePOM {
     this.productCellName = "mat-cell.mat-column-product";
     this.priceCell = "mat-cell.mat-column-price";
     this.totalPriceText = this.page.locator("#price");
+    this.quantitySpan = (productName) => page.locator(`//mat-cell[contains(@class, 'mat-column-product') and contains(text(), '${productName}')]/following-sibling::mat-cell[contains(@class, 'mat-column-quantity')]//span[not(@class)]`);
+    this.addButton = (productName) => page.locator(`//mat-cell[contains(@class, 'mat-column-product') and contains(text(), '${productName}')]/following-sibling::mat-cell[contains(@class, 'mat-column-quantity')]/button/span//*[contains(@class, 'fa-plus-square')]/ancestor::button`);
+    this.deleteButton = (productName) => page.locator(`//mat-cell[contains(@class, 'mat-column-product') and contains(text(), '${productName}')]/following-sibling::mat-cell[contains(@class, 'mat-column-remove')]`);
   }
 
   // Add product to cart and verify success
@@ -157,31 +163,86 @@ export class BasketPage implements BasketPagePOM {
     await test.step("[Assertion] Sum up the prices from the priceMap and verify with Displayed Total", async () => {
       const totalSum = Array.from(priceMap.values()).reduce((sum, price) => sum + price, 0);
 
-      const totalPriceText = await this.totalPriceText.innerText();
-      displayedTotalPrice = this.extractPrice(totalPriceText, "Total");
+      displayedTotalPrice = this.extractPrice(await this.totalPrice, "Total");
       expect(totalSum).toBe(displayedTotalPrice);
       console.log("Total Unit Price of products is:" + totalSum + ", DisplayedTotalPrice is:" + displayedTotalPrice);
     });
     return displayedTotalPrice;
   };
 
-  // Increment product quantity in the basket
-  incrementProductQuantityInBasket = async (productName: string): Promise<void> => {
-    return await test.step(`Increment quantity for ${productName}`, async () => {
-      const quantityInput = this.quantityInput.first();
-      await quantityInput.fill("2"); // Example: set quantity to 2
-      console.log(`Incremented quantity for ${productName} in basket.`);
+  get totalPrice(): Promise<string> {
+    return this.totalPriceText.innerText();
+  }
+
+  incrementProductQuantityInBasket = async (productName: string, priceMap: Map<string, number>, totalBasketPrice: number) => {
+    let displayedTotalPrice = 0,
+      unitPrice = 0;
+    await test.step(`[Assertion] Increment quantity for ${productName} and Verify Total price increases accordingly`, async () => {
+      unitPrice = priceMap.get(productName.trim()) || 0;
+
+      const currentQuantityText = await this.quantitySpan(productName).innerText();
+      let currentQuantity = parseInt(currentQuantityText.trim(), 10);
+      await this.addButton(productName).click();
+
+      // Wait for the DOM update (needed)
+      await this.page.waitForTimeout(1000);
+
+      // Verify the quantity has been incremented
+      const updatedQuantityText = await this.quantitySpan(productName).innerText();
+      const updatedQuantity = parseInt(updatedQuantityText.trim(), 10);
+
+      // Assert that the quantity has been incremented by 1
+      if (updatedQuantity !== currentQuantity + 1) {
+        throw new Error(`Quantity for ${productName} did not increment correctly. Expected ${currentQuantity + 1}, but got ${updatedQuantity}`);
+      }
+      console.log(`Successfully incremented quantity for ${productName} to ${updatedQuantity}`);
+
+      //Due to bug
+      // // Verify that the price has been updated based on the new quantity
+      // const updatedPriceText = extractPrice(priceCell, productName);
+
+      // // Calculate the expected price based on the updated quantity
+      // const expectedUpdatedTotalPrice = unitPrice * updatedQuantity;
+
+      // // Log the updated state for reference
+      // console.log(`Product: ${productName}, Updated Quantity: ${updatedQuantity}, Updated Price: ${updatedPriceText}, Expected Updated Total Price: ${expectedUpdatedTotalPrice}`);
+
+      // // Assert that the displayed price matches the expected price based on the updated quantity
+      // if (updatedPriceText !== expectedUpdatedTotalPrice) {
+      //   throw new Error(`Price for ${productName} did not update correctly. Expected ${expectedUpdatedTotalPrice}, but got ${updatedPriceText}`);
+      // }
+
+      // Get the displayed total price from the basket page
+      displayedTotalPrice = this.extractPrice(await this.totalPrice, "Total");
+      expect(totalBasketPrice + unitPrice).toBe(displayedTotalPrice);
+      console.log(`Successfully verified Total price ${displayedTotalPrice} aft adding one more unit from ${productName}`);
     });
+    return displayedTotalPrice;
   };
 
-  //   // Delete product from the basket
-  //   deleteProductFromBasket = async (productName: string): Promise<void> => {
-  //     return await test.step(`Delete ${productName} from the basket`, async () => {
-  //       const deleteButton = this.page.locator(`${this.deleteProductButton.locator()} >> text=${productName}`);
-  //       await deleteButton.click();
-  //       console.log(`Deleted ${productName} from basket.`);
-  //     });
-  //   };
+  deleteProductFromBasket = async (productName: string, priceMap: Map<string, number>, totalBasketPrice: number) => {
+    let displayedTotalPrice = 0;
+    let unitPrice: number = 0;
+    await test.step(`[Assertion] Remove product ${productName} from basket and Verify Total price decreases accordingly`, async () => {
+      unitPrice = priceMap.get(productName.trim()) || 0;
+      const currentQuantityText = await this.quantitySpan(productName).innerText();
+      const currentQuantity = parseInt(currentQuantityText.trim(), 10);
+
+      // Click the "trash" icon to remove item
+      await this.deleteButton(productName).click();
+
+      // // Wait for the DOM update (needed)
+      await this.page.waitForTimeout(1000);
+
+      // Get the displayed total price from the basket page
+      displayedTotalPrice = this.extractPrice(await this.totalPrice, "Total");
+      let priceToReduce = currentQuantity * unitPrice;
+      expect(totalBasketPrice - priceToReduce).toBeCloseTo(displayedTotalPrice, 2);
+
+      console.log(`Successfully verified Total price ${displayedTotalPrice} aft removing ${productName}`);
+    });
+    return displayedTotalPrice;
+  };
 
   //   // Fill out address information during checkout
   //   fillOutAddress = async (userName: string, mobileNumber: string): Promise<void> => {
