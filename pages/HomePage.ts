@@ -22,6 +22,7 @@ export interface HomePagePOM {
 
 export class HomePage implements HomePagePOM {
   readonly page: Page;
+  private readonly snackBar: string;
   private readonly closeWelcomeBannerBtn: string;
   private readonly cookieMessageBtn: string;
   private readonly paginationContainer: Locator;
@@ -54,16 +55,19 @@ export class HomePage implements HomePagePOM {
     this.reviewsTitle = page.locator('mat-panel-title:has-text("Reviews")');
     this.reviewsPanel = page.locator('mat-expansion-panel-header:has-text("Reviews")');
     this.closePopupBtn = page.getByRole("button", { name: "Close Dialog" });
-    this.fruitTile = (fruitName: string) => `div.mat-tooltip-trigger:has-text('${fruitName}')`;
+    this.fruitTile = (fruitName) => `div.mat-tooltip-trigger:has-text('${fruitName}')`;
     this.fruitImage = "img.mat-card-image";
     this.reviewExpand = ".mat-expanded";
+    this.snackBar = ".mat-simple-snackbar";
   }
 
+  // Methods
   goToHome: PageAction = async () => {
     await this.page.goto("/", { waitUntil: "load" });
     const title = await this.page.title();
     expect(title).toContain("OWASP Juice Shop");
     await this.page.waitForLoadState("domcontentloaded");
+    await this.page.waitForSelector(this.snackBar, { state: "hidden" });
   };
 
   closeWelcomeBanner = async () => {
