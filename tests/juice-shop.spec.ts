@@ -30,7 +30,7 @@ test.describe("OWASP Juice Shop Tests", () => {
     await homePage.acceptCookie();
   });
 
-  test("1. Verify Maximum Items Displayed on Homepage After Scrolling and Changing Items Per Page", async ({}) => {
+  test.only("1. Verify Maximum Items Displayed on Homepage After Scrolling and Changing Items Per Page", async ({}) => {
     await homePage.scrollToEndOfPage();
     const totalItems = await homePage.getMaximumProductCount();
     let count = await homePage.selectMaxItemsPerPage();
@@ -92,67 +92,6 @@ test.describe("OWASP Juice Shop Tests", () => {
   });
 
   test.skip("4 -old. E2E Test: Product Addition, Cart Validation, Basket Operations, and Checkout Workflow", async ({}) => {
-    // let totalBasketPrice = await verifyTotalPriceInBasket(page, priceMap);
-    // totalBasketPrice = await incrementProductQuantityInBasket(page, productNames[0], priceMap, totalBasketPrice);
-    // totalBasketPrice = await incrementProductQuantityInBasket(page, productNames[1], priceMap, totalBasketPrice);
-    // totalBasketPrice = await incrementProductQuantityInBasket(page, productNames[2], priceMap, totalBasketPrice);
-    // totalBasketPrice = await deleteProductFromBasket(page, productNames[0], priceMap, totalBasketPrice);
-    // await test.step("Proceed to Checkout, fill out Address", async () => {
-    //   await page.getByRole("button", { name: " Checkout" }).click({ force: true });
-    //   await page.getByRole("button", { name: "Add a new address" }).click();
-    //   await page.getByRole("textbox", { name: "Country" }).fill("Saudi Arabia");
-    //   await page.getByRole("textbox", { name: "Name" }).fill(userName);
-    //   await page.getByPlaceholder("Please provide a mobile number.").pressSequentially(String(mobileNumber));
-    //   await page.getByRole("textbox", { name: "ZIP Code" }).fill("35419");
-    //   await page.getByRole("textbox", { name: "Address" }).fill(faker.location.streetAddress());
-    //   await page.getByRole("textbox", { name: "City" }).fill(faker.location.city());
-    //   await page.getByRole("textbox", { name: "State" }).fill(faker.location.state());
-    //   await page.getByRole("button", { name: "send Submit" }).click();
-    // });
-    // let radioButton = page.locator(".mat-radio-input");
-    // await test.step("Select Address & Proceed for Delivery selection", async () => {
-    //   await radioButton.check({ force: true });
-    //   await expect(radioButton).toBeChecked();
-    //   await page.getByRole("button", { name: "Proceed to payment selection" }).click();
-    // });
-    // await test.step("Select Delivery method & Proceed for Payment selection", async () => {
-    //   radioButton = page.locator("//mat-cell[contains(text(), 'Standard Delivery')]/preceding-sibling::mat-cell//input[@id='mat-radio-45-input']");
-    //   await radioButton.check({ force: true });
-    //   await page.getByRole("button", { name: "Proceed to delivery method selection" }).click();
-    // });
-    // await test.step("[Assertion] Verify Wallet Balance is 0.00", async () => {
-    //   const walletBalance = page.locator("span.confirmation");
-    //   await expect(walletBalance).toHaveText("0.00");
-    // });
-    // await test.step("Add Debit card for Payment", async () => {
-    //   await page.getByText("Add a credit or debit card").click();
-    //   await page.getByRole("textbox", { name: "Name" }).fill(userName);
-    //   await page.getByLabel("Card Number").pressSequentially(String(cardNumber));
-    //   const expiryMonth = page.getByLabel("Expiry Month");
-    //   await expiryMonth.selectOption({ value: "1" });
-    //   const expiryYear = page.getByLabel("Expiry Year");
-    //   await expiryYear.selectOption({ value: "2080" });
-    //   await page.getByRole("button", { name: "send Submit" }).click();
-    // });
-    // await test.step("Select the Debit card added and Proceed to Order Summary", async () => {
-    //   const cardText = page.locator('.mat-simple-snack-bar-content:has-text("Your card ending with")');
-    //   await expect(cardText).toHaveText(/Your card ending with \d{4} has been saved for your convenience./);
-    //   radioButton = page.locator(".mat-radio-input");
-    //   await radioButton.check({ force: true });
-    //   await page.getByRole("button", { name: "Proceed to review" }).click();
-    //   await page.waitForURL(/order-summary/);
-    // });
-    // await test.step("[Assertion] Verify Total price in Order Summary & Complete purchase", async () => {
-    //   await page.waitForLoadState("load");
-    //   await page.waitForTimeout(1000);
-    //   const orderSummaryTotal = await page.locator("//td[text()='Total Price']/following-sibling::td[contains(@class, 'price')]").innerText();
-    //   console.log("orderSummaryTotal is :" + orderSummaryTotal);
-    //   let orderSummary = extractPrice(orderSummaryTotal, "Order Summary");
-    //   expect(orderSummary).toBe(totalBasketPrice);
-    //   await page.getByRole("button", { name: "Complete your purchase" }).click();
-    //   await page.waitForURL(/order-completion/);
-    //   await expect(page.getByText("Thank you for your purchase!")).toBeVisible();
-    // });
     // await test.step("Extract Order ID from URL", async () => {
     //   const currentUrl = page.url();
     //   const orderIdMatch = currentUrl.match(/\/order-completion\/([a-z0-9-]+)/);
@@ -170,9 +109,9 @@ test.describe("OWASP Juice Shop Tests", () => {
     const productNames = ["Apple Pomace", "Carrot Juice (1000ml)", "Green Smoothie", "Lemon Juice (500ml)", "Quince Juice (1000ml)"]; // Example product names
     let priceMap = new Map<string, number>();
 
-    const { cardNumber, userName, mobileNumber } = await basketPage.generateFakeData();
+    const { userName, mobileNumber, cardNumber } = await basketPage.getFakeUserData();
 
-    console.log("Card Number:", cardNumber);
+    console.log("Card number:", cardNumber);
     console.log("User Name:", userName);
     console.log("Mobile Number:", mobileNumber);
 
@@ -213,41 +152,21 @@ test.describe("OWASP Juice Shop Tests", () => {
     // // Delete a product
     totalBasketPrice = await basketPage.deleteProductFromBasket(productNames[0], priceMap, totalBasketPrice);
     console.log("displayedTotalPric aft delete operations :" + totalBasketPrice);
-    // await test.step("Proceed to Checkout, fill out Address", async () => {
-    //   await basketPage.proceedToCheckout();
-    //   await basketPage.fillOutAddress(userName, mobileNumber);
-    // });
+    await basketPage.proceedToCheckoutAndFillAddress();
 
-    // await test.step("Select Address & Proceed for Delivery selection", async () => {
-    //   await basketPage.selectAddressAndProceedToDelivery();
-    // });
+    await basketPage.selectAddressAndProceedToDeliverySelection();
+    await basketPage.selectDeliveryMethodAndProceedToPayment();
+    await basketPage.verifyWalletBalance();
 
-    // await test.step("Select Delivery method & Proceed for Payment selection", async () => {
-    //   await basketPage.selectDeliveryMethodAndProceedToPayment();
-    // });
+    await basketPage.addDebitCardForPayment();
 
-    // await test.step("[Assertion] Verify Wallet Balance is 0.00", async () => {
-    //   await basketPage.verifyWalletBalance();
-    // });
+    await basketPage.selectDebitCardAndProceedToReview();
 
-    // await test.step("Add Debit card for Payment", async () => {
-    //   await basketPage.addDebitCardForPayment(cardNumber, userName);
-    // });
+    await basketPage.verifyTotalPriceInOrderSummary(totalBasketPrice);
+    await basketPage.completePurchase();
 
-    // await test.step("Select the Debit card added and Proceed to Order Summary", async () => {
-    //   await basketPage.selectDebitCardAndProceedToReview();
-    // });
-
-    // await test.step("[Assertion] Verify Total price in Order Summary & Complete purchase", async () => {
-    //   let orderSummaryTotal = await basketPage.verifyTotalPriceInOrderSummary(totalBasketPrice);
-    //   expect(orderSummaryTotal).toBe(totalBasketPrice);
-    //   await basketPage.completePurchase();
-    // });
-
-    // await test.step("Extract Order ID from URL", async () => {
-    //   const orderId = await basketPage.extractOrderIdFromUrl();
-    //   console.log(`Order ID: ${orderId}`);
-    // });
+    const orderId = await basketPage.extractOrderIdFromUrl();
+    console.log(`Order ID: ${orderId}`);
   });
 });
 
