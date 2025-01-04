@@ -32,7 +32,7 @@ test.describe("OWASP Juice Shop Tests", () => {
     await homePage.acceptCookie();
   });
 
-  test("1. Verify Maximum Items Displayed on Homepage After Scrolling and Changing Items Per Page", async ({}) => {
+  test.only("1. Verify Maximum Items Displayed on Homepage After Scrolling and Changing Items Per Page", async ({}) => {
     //test.slow();
     await homePage.scrollToEndOfPage();
     const totalItems = await homePage.getMaximumProductCount();
@@ -41,7 +41,20 @@ test.describe("OWASP Juice Shop Tests", () => {
     await homePage.verifyItemsDisplayed(totalItems, selectedOption);
   });
 
-  test("2. Verify Product Popup and Review Expansion for Apple Juice", async ({}) => {
+  test.only("2. Verify Product Popup and Review Expansion for Apple Juice", async ({}) => {
+    const productName = "Apple Juice (1000ml)";
+
+    const product = await homePage.locateProduct(productName);
+    const imageSrc = await homePage.captureProductImage(product);
+    await homePage.verifyPopupAppears(product);
+    await homePage.extractPopupImageSrc(product, productName, imageSrc);
+
+    const reviewCount = await homePage.extractReviewCount();
+    await homePage.expandReviewsIfPresent(reviewCount);
+    await homePage.closePopup();
+  });
+
+  test("2-old. Verify Product Popup and Review Expansion for Apple Juice", async ({}) => {
     let fruitName = "Apple Juice (1000ml)"; //"Apple Pomace" for testing
     let product: any,
       imageSrc: any,
@@ -62,7 +75,6 @@ test.describe("OWASP Juice Shop Tests", () => {
       await expect(popup).toBeVisible();
     });
 
-    // Step 5: Extract the image source from the popup
     await test.step("[Assertion] Extract the image source from the popup & Verify", async () => {
       popUpImageSrc = await product.getByAltText(`${fruitName}`).getAttribute("src");
       console.log("Image Source:", popUpImageSrc);

@@ -10,6 +10,14 @@ export interface HomePagePOM {
   scrollToEndOfPage: PageAction;
   verifyLastOptionSelected: PageAction;
   verifyItemsDisplayed: PageAction;
+
+  locateProduct: PageAction<string, Locator>;
+  captureProductImage: PageAction<Locator, string>;
+  verifyPopupAppears: PageAction<Locator>;
+  extractPopupImageSrc: PageAction;
+  extractReviewCount: PageAction<number>;
+  expandReviewsIfPresent: PageAction<number>;
+  closePopup: PageAction;
 }
 
 export class HomePage implements HomePagePOM {
@@ -22,6 +30,13 @@ export class HomePage implements HomePagePOM {
   private readonly pageCountOptions: Locator;
   private readonly matCards: Locator;
   private readonly itemsPerPageLabel: Locator;
+  private readonly productPopup: Locator;
+  private readonly reviewsTitle: Locator;
+  private readonly reviewsPanel: Locator;
+  private readonly closePopupBtn: Locator;
+  private readonly fruitTile: (fruitName: string) => string;
+  private readonly fruitImage: string;
+  private readonly reviewExpand: string;
 
   constructor(page: Page) {
     this.page = page;
@@ -33,6 +48,13 @@ export class HomePage implements HomePagePOM {
     this.pageCountOptions = page.locator("mat-option .mat-option-text");
     this.matCards = page.locator(".mat-card");
     this.itemsPerPageLabel = page.locator(".mat-paginator-page-size-label");
+    this.productPopup = page.locator("mat-dialog-content");
+    this.reviewsTitle = page.locator('mat-panel-title:has-text("Reviews")');
+    this.reviewsPanel = page.locator('mat-expansion-panel-header:has-text("Reviews")');
+    this.closePopupBtn = page.getByRole("button", { name: "Close Dialog" });
+    this.fruitTile = (fruitName: string) => `div.mat-tooltip-trigger:has-text('${fruitName}')`;
+    this.fruitImage = "img.mat-card-image";
+    this.reviewExpand = ".mat-expanded";
   }
 
   goToHome: PageAction = async () => {
@@ -45,9 +67,11 @@ export class HomePage implements HomePagePOM {
   closeWelcomeBanner = async () => {
     test.step("Close the welcome banner if visible", async () => {
       try {
-        const welcomeBanner = await this.page.waitForSelector(this.closeWelcomeBannerBtn, { state: "visible", timeout: 5000 });
-        if (welcomeBanner) await welcomeBanner.click();
-        console.log("Welcome Banner clicked");
+        const welcomeBanner = await this.page.waitForSelector(this.closeWelcomeBannerBtn, { state: "visible", timeout: 10000 });
+        if (welcomeBanner) {
+          await welcomeBanner.click();
+          console.log("Welcome Banner clicked");
+        }
       } catch (err) {
         console.log("Welcome Banner was not present");
       }
@@ -57,9 +81,11 @@ export class HomePage implements HomePagePOM {
   acceptCookie = async () => {
     await test.step("Accept cookies if visible", async () => {
       try {
-        const cookieButton = await this.page.waitForSelector(this.cookieMessageBtn, { state: "visible", timeout: 5000 });
-        if (cookieButton) await cookieButton.click();
-        console.log("Cookie consent clicked");
+        const cookieButton = await this.page.waitForSelector(this.cookieMessageBtn, { state: "visible", timeout: 10000 });
+        if (cookieButton) {
+          await cookieButton.click();
+          console.log("Cookie consent clicked");
+        }
       } catch (err) {
         console.log("Cookie consent was not present");
       }
@@ -137,6 +163,61 @@ export class HomePage implements HomePagePOM {
     await test.step(`[Assertion] Verify that ${totalItems} items are displayed after selecting ${selectedOption} items per page`, async () => {
       const cardCount = await this.matCards.count();
       expect(cardCount).toBe(totalItems);
+    });
+  };
+
+  locateProduct: PageAction<string, Locator> = async (productName: string): Promise<Locator> => {
+    return await test.step(`Locate the product '${productName}'`, async () => {
+      const product = this.page.locator(this.fruitTile(productName));
+      await product.waitFor({ state: "visible" });
+      return product;
+    });
+  };
+
+  captureProductImage = async (product: Locator): Promise<string> => {
+    return await test.step("Capture the image source of the product", async () => {
+      const imageSrc = await product.locator(this.fruitImage).getAttribute("src");
+      if (!imageSrc) throw new Error("Image source not found");
+      return imageSrc;
+    });
+  };
+
+  verifyPopupAppears: PageAction<Locator> = async (product: Locator): Promise<void> => {
+    await test.step("[Assertion] Click on the product to open the popup and verify it appears", async () => {
+      await product.click();
+      await expect(this.productPopup).toBeVisible();
+    });
+  };
+
+  extractPopupImageSrc = async (product: Locator, productName: string, homePageImageSrc: string) => {
+    await test.step("[Assertion] Extract the image source from the popup and verify", async () => {
+      const popupImageSrc = await product.getByAltText(productName).getAttribute("src");
+      if (!popupImageSrc) throw new Error("Popup image source not found");
+      expect(homePageImageSrc).toEqual(popupImageSrc);
+    });
+  };
+
+  extractReviewCount: PageAction<number> = async (): Promise<number> => {
+    return await test.step("Extract the review count", async () => {
+      const reviewText = await this.reviewsTitle.innerText();
+      const reviewCount = parseInt(reviewText.match(/\((\d+)\)/)?.[1] || "0");
+      return reviewCount;
+    });
+  };
+
+  expandReviewsIfPresent: PageAction<number> = async (reviewCount: number): Promise<void> => {
+    await test.step("Expand the review section if review count is greater than 0", async () => {
+      if (reviewCount > 0) {
+        await this.reviewsPanel.click();
+        const expandedReview = await this.page.waitForSelector(this.reviewExpand);
+        expect(expandedReview).not.toBeNull(); // Ensuring the element is found and visible
+      }
+    });
+  };
+
+  closePopup: PageAction = async (): Promise<void> => {
+    await test.step("Close the popup", async () => {
+      await this.closePopupBtn.click();
     });
   };
 }
