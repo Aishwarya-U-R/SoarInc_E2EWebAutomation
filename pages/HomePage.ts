@@ -14,8 +14,8 @@ export interface HomePagePOM {
 
 export class HomePage implements HomePagePOM {
   readonly page: Page;
-  private readonly closeWelcomeBannerBtn: Locator;
-  private readonly cookieMessageButton: Locator;
+  private readonly closeWelcomeBannerBtn: string;
+  private readonly cookieMessageBtn: string;
   private readonly paginationContainer: Locator;
   private readonly paginatorRangeLabel: Locator;
   private readonly itemsPerPageComboBox: Locator;
@@ -25,8 +25,8 @@ export class HomePage implements HomePagePOM {
 
   constructor(page: Page) {
     this.page = page;
-    this.closeWelcomeBannerBtn = page.getByRole("button", { name: "Close Welcome Banner" });
-    this.cookieMessageButton = page.getByRole("button", { name: "dismiss cookie message" });
+    this.closeWelcomeBannerBtn = 'button[aria-label="Close Welcome Banner"]';
+    this.cookieMessageBtn = 'a[aria-label="dismiss cookie message"]';
     this.paginationContainer = page.locator(".mat-paginator-container");
     this.paginatorRangeLabel = page.locator(".mat-paginator-range-label");
     this.itemsPerPageComboBox = page.locator("role=combobox[name='Items per page:']");
@@ -44,38 +44,25 @@ export class HomePage implements HomePagePOM {
 
   closeWelcomeBanner = async () => {
     test.step("Close the welcome banner if visible", async () => {
-      if (await this.closeWelcomeBannerBtn.isVisible({ timeout: 10000 })) {
-        await this.closeWelcomeBannerBtn.click();
+      try {
+        const welcomeBanner = await this.page.waitForSelector(this.closeWelcomeBannerBtn, { state: "visible", timeout: 5000 });
+        if (welcomeBanner) await welcomeBanner.click();
+        console.log("Welcome Banner clicked");
+      } catch (err) {
+        console.log("Welcome Banner was not present");
       }
-      // try {
-      //   await this.page.waitForLoadState("networkidle");
-      //   await this.closeWelcomeBannerBtn.waitFor({ state: "attached" });
-      //   await this.closeWelcomeBannerBtn.focus();
-      //   await this.closeWelcomeBannerBtn.click({ force: true });
-      //   await expect(this.closeWelcomeBannerBtn).toBeHidden();
-      //   await this.page.waitForLoadState("networkidle");
-      // } catch (error) {
-      //   console.error("Failed to close welcome banner within timeout:", error);
-      // }
     });
   };
 
   acceptCookie = async () => {
-    test.step("Accept cookies if visible if visible", async () => {
-      if (await this.cookieMessageButton.isVisible({ timeout: 10000 })) {
-        await this.cookieMessageButton.click();
+    await test.step("Accept cookies if visible", async () => {
+      try {
+        const cookieButton = await this.page.waitForSelector(this.cookieMessageBtn, { state: "visible", timeout: 5000 });
+        if (cookieButton) await cookieButton.click();
+        console.log("Cookie consent clicked");
+      } catch (err) {
+        console.log("Cookie consent was not present");
       }
-      // try {
-      //   await this.page.waitForLoadState("domcontentloaded");
-      //   await this.cookieMessageButton.waitFor({ state: "visible" });
-      //   await this.cookieMessageButton.waitFor({ state: "attached" });
-      //   await this.cookieMessageButton.focus();
-      //   await this.cookieMessageButton.click({ force: true });
-      //   await expect(this.cookieMessageButton).toBeHidden();
-      //   await this.page.waitForLoadState("domcontentloaded");
-      // } catch (error) {
-      //   console.error("Failed to accept cookies within timeout:", error);
-      // }
     });
   };
 
@@ -96,7 +83,7 @@ export class HomePage implements HomePagePOM {
         await element.waitFor({ state: "attached" });
         await element.waitFor({ state: "visible" });
         await element.scrollIntoViewIfNeeded();
-        await this.page.waitForTimeout(1000);
+        await this.page.waitForTimeout(500);
       } catch (error) {
         throw new Error(`Failed to scroll element into view: ${error}`);
       }
